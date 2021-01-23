@@ -50,7 +50,8 @@ char done_turn[10] = "Turn done";
 trilobot::Sonar_data dst_msg;
 
 ros::Publisher confirmer(topic_motors_confirmation, &str_msg);
-ros::Publisher sonar_publisher(topic_sonars_distance, &dst_msg);
+ros::Publisher sonar_publisher();
+sonar_publisher.advertise(topic_sonars_distance, &dst_msg, latch=true);
 
 ros::Subscriber<trilobot::Motors_move> mover(topic_motors_move, &move_callback);
 ros::Subscriber<trilobot::Motors_turn> turner(topic_motors_turn, &turn_callback);
