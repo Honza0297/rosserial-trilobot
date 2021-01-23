@@ -104,15 +104,21 @@ void Motors::move(int speed)
   Serial1.write(control_byte+127); 
 }
 
-void Motors::turn(int angle, int speed)
+void Motors::turn(int speed, char dir, int angle)
 {
+  /* Check args*/
+  if ((speed < -100 || speed > 100)
+      ||
+      (dir != 'L' && dir != 'R')
+      ||
+      (angle < -360 || angle > 360)) // Tohle by tu jakože být nemuselo, ale nechci se fyzicky zycyklit :)
+  {
+    return;
+  }
  
-  bool right = true;
-  if(angle > 0)
-    right = true;
-  else if (angle < 0)
+  if (angle < 0)
     {
-      right = false;
+      speed *= -1;
       angle *= -1;
     }
     
@@ -120,9 +126,9 @@ void Motors::turn(int angle, int speed)
   
   attach_interrupts();
   
-  if(right == true)
+  if(dir == 'R')
     this->turn_right(speed);
-  else if (right == false)
+  else if (dir == 'L')
     this->turn_left(speed);
 
   while(1)
@@ -146,9 +152,65 @@ void Motors::turn_right(int speed)
   Serial1.write(control_byte+127);
 }
 
-void Motors::circle(int diameter, bool countercloockwise)
+void Motors::circle(int speed, char dir, int diameter)
 {
-  /*TODO*/
+  /* Check args*/
+  if ((speed < -100 || speed > 100)
+      ||
+      (dir != 'L' && dir != 'R')
+      ||
+      (diameter < WHEEL_DISTANCE))
+  {
+    return;
+  }
+
+
+  int distance_left  = 0;
+  int distance_right = 0;
+
+  if(dir == 'L')
+  {
+    int distance_left = 2*PI*(diameter-WHEEL_DISTANCE);
+    int distance_right = 2*PI*WHEEL_DISTANCE;
+  }
+  else if (dir == 'R')
+  {
+    int distance_right = 2*PI*(diameter-WHEEL_DISTANCE);
+    int distance_left = 2*PI*WHEEL_DISTANCE;
+  }
+
+  desired_steps_left = (int)(distance_left/WHEEL_CIRCUIT*STEPS_ONE_CHANNEL);
+  desired_steps_right = (int) (distance_right/WHEEL_CIRCUIT*STEPS_ONE_CHANNEL);
+
+
+  speed = get_speed_from_percentage(speed);
+  int left_speed = 0;
+  int right_speed = 0;
+
+  if(dir == 'L') // r je vnejsi
+  {
+    int right_speed = speed;
+    int left_speed = (int) speed * (diameter-WHEEL_DISTANCE)/diameter;
+  }
+  else if (dir == 'R')// l je vnejsi
+  {
+    int right_speed = (int) speed * (diameter-WHEEL_DISTANCE)/diameter;
+    int left_speed = speed;
+  }
+
+
+  attach_interrupts();
+  this->turn_right(right_speed);
+  this->turn_left(left_speed);
+
+  while(1)
+  {
+    if(steps_left == desired_steps_left || steps_right == desired_steps_right) 
+      break;
+  }
+  this->stop();
+  detach_interrupts();
+  
   return;
 }
 

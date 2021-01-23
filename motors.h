@@ -35,7 +35,8 @@
 #define RIGHT_A 3
 #define RIGHT_B 52
 
-#define TURN_RADIUS 40
+/* Vzdalenost mezi koly robota*/
+#define WHEEL_DISTANCE 20
 /**
  * @brief Funkce pro ovladani preruseni
 */
@@ -68,17 +69,13 @@ class Motors
          */
         void move(int speed);
         /**
-         * @brief Funkce slouzici pro zataceni. Pro zataceni doprava zadavejte kladny, pro zataceni doleva zaporny uhel. 
-         * @param angle uhel pro zatoceni ve stupnich
-         * @param speed rychlost v procentech
+         * @brief Funkce slouzici pro zataceni.  
          */ 
-        void turn(int angle, int speed);
+        void Motors::turn(int speed, char dir, int angle);
         /**
          * @brief Funkce pro jezdeni do kruhu o danem polomeru 
-         * @param diameter polomer kruhu v cm, pocitano od vnejsiho kola do stredu otaceni. 
-         * @param counterclokwise pokud je true, otaceni probiha proti smeru hodinovych rucicek, jinak po smeru
          */
-        void circle(int diameter, bool counterclokwise=false);
+        void Motors::circle(int speed, char dir, int diameter)
         /**
          * @brief Funkce vrati rychlost ve spravnem rozsahu z procentualniho vyjadreni rychlosti
          * @param speed rychlost v procentech
