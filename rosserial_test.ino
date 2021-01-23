@@ -50,8 +50,7 @@ char done_turn[10] = "Turn done";
 trilobot::Sonar_data dst_msg;
 
 ros::Publisher confirmer(topic_motors_confirmation, &str_msg);
-ros::Publisher sonar_publisher();
-sonar_publisher.advertise(topic_sonars_distance, &dst_msg, latch=true);
+ros::Publisher sonar_publisher(topic_sonars_distance, &dst_msg);
 
 ros::Subscriber<trilobot::Motors_move> mover(topic_motors_move, &move_callback);
 ros::Subscriber<trilobot::Motors_turn> turner(topic_motors_turn, &turn_callback);
@@ -63,7 +62,7 @@ ros::Subscriber<std_msgs::Empty> sonar_sub(topic_sonars_request, &sonar_request_
 
 void sonar_request_callback(const std_msgs::Empty &msg)
 {
-  nh.loginfo("Got request to start sonaring");
+  nh.loginfo("Got request to start sonar measurement.");
   sonar_data data = sonars->get_distances();  
   
   dst_msg.front = data.front;
@@ -140,5 +139,13 @@ void setup() {
 
 void loop() {
   nh.spinOnce();
-  delay(100);
+  
+  if(motors->is_move_in_progress())
+  {
+     if(motors->distance_reached()) 
+      {
+        motors->stop_after_distance();
+      }
+  }
+  delay(50);
 }

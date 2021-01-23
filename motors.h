@@ -35,8 +35,9 @@
 #define RIGHT_A 3
 #define RIGHT_B 52
 
-/* Vzdalenost mezi koly robota*/
-#define WHEEL_DISTANCE 20
+#define TURN_RADIUS 40
+
+
 /**
  * @brief Funkce pro ovladani preruseni
 */
@@ -51,6 +52,9 @@ void detach_interrupts();
 */
 class Motors
 {
+    private:
+        int move_in_progress;
+        int steps_to_go;
     public:
         /**
          *  @brief Konstruktor. Zahaji komunikaci po Seriove lince, nastavi spravny pinMode pro piny ekonderu
@@ -69,13 +73,17 @@ class Motors
          */
         void move(int speed);
         /**
-         * @brief Funkce slouzici pro zataceni.  
+         * @brief Funkce slouzici pro zataceni. Pro zataceni doprava zadavejte kladny, pro zataceni doleva zaporny uhel. 
+         * @param angle uhel pro zatoceni ve stupnich
+         * @param speed rychlost v procentech
          */ 
-        void Motors::turn(int speed, char dir, int angle);
+        void turn(int angle, int speed);
         /**
          * @brief Funkce pro jezdeni do kruhu o danem polomeru 
+         * @param diameter polomer kruhu v cm, pocitano od vnejsiho kola do stredu otaceni. 
+         * @param counterclokwise pokud je true, otaceni probiha proti smeru hodinovych rucicek, jinak po smeru
          */
-        void Motors::circle(int speed, char dir, int diameter)
+        void circle(int diameter, bool counterclokwise=false);
         /**
          * @brief Funkce vrati rychlost ve spravnem rozsahu z procentualniho vyjadreni rychlosti
          * @param speed rychlost v procentech
@@ -87,13 +95,17 @@ class Motors
          * */
         void stop();
         /**
-         * @brief Funkce pro doplneni 
-         * */
-        void jed_rovne(int distance, int speed);
+         * Function stops motors, sets flag move_in_progress to false and detaches interrupts. 
+         */
+        void stop_after_distance();
         /**
-         * @brief Funkce pro doplneni 
-         * */
-        void zatoc(int angle, int speed);
+         * if there is a movement in progress, function return whether the movement should be stopped. 
+         */
+        bool distance_reached();
+        /**
+         * getter of move_in_progress var
+         */
+        bool is_move_in_progress();
         /**
          * @brief Funkce pro nekonecne zataceni doleva.
          * */
