@@ -25,8 +25,8 @@
 /* Zastavujici byte */
 #define STOP_BYTE 0x00
 
-/* Obvod hnanych kol robota */
-#define WHEEL_CIRCUIT 27.9
+/* Obvod hnanych kol robota */ // zmenena hodnota, puvodne to bylo v cm (=27.9)
+#define WHEEL_CIRCUIT 0.279
 
 /* Piny pro kanaly enkoderu */
 #define LEFT_A 2
@@ -78,6 +78,7 @@ class Motors
          * @param speed rychlost v procentech
          */ 
         void turn(int angle, int speed);
+        void newmove(float l, float r);
         /**
          * @brief Funkce pro jezdeni do kruhu o danem polomeru 
          * @param diameter polomer kruhu v cm, pocitano od vnejsiho kola do stredu otaceni. 

@@ -19,8 +19,11 @@
  * */
 volatile int steps_right = 0;
 volatile int steps_left = 0;
-
-
+volatile double time_left = 0;
+volatile double time_right = 0;
+float delta = 0.01; 
+float speed_left = 0;
+float speed_right = 0;
 /**
  * Prototypy funkci pro ovladani preruseni
  * */
@@ -54,7 +57,48 @@ void Motors::stop_after_distance()
 
 bool Motors::distance_reached()
 {
-  return (steps_left == this->steps_to_go || steps_right == this->steps_to_go);
+  return (steps_left >= this->steps_to_go || steps_right >= this->steps_to_go);
+}
+
+void Motors::newmove(float l, float r)
+{
+  
+  time_left = micros();
+  time_right = micros();
+  int perc_left = 10;
+  int perc_right = 10;
+  attach_interrupts();
+  while(!(abs(speed_left-l) < delta) &&
+        !(abs(speed_right-r) < delta))
+        {
+          if(speed_left < l)
+          {
+            perc_left++;
+            byte lbyte = get_speed_from_percentage(perc_left);
+            Serial1.write(lbyte+127);    
+          }
+          else
+          {
+            perc_left--;
+            byte lbyte = get_speed_from_percentage(perc_left);
+            Serial1.write(lbyte+127);
+          }
+          if(speed_right< l)
+          {
+            perc_right++;
+            byte lbyte = get_speed_from_percentage(perc_right);
+            Serial1.write(lbyte);    
+          }
+          else
+          {
+            perc_right--;
+            byte lbyte = get_speed_from_percentage(perc_right);
+            Serial1.write(lbyte);
+          }
+          speed_left = (WHEEL_CIRCUIT*steps_left/STEPS_ONE_CHANNEL)/(micros()-time_left)*1000000;
+          speed_right = (WHEEL_CIRCUIT*steps_right/STEPS_ONE_CHANNEL)/(micros()-time_right)*1000000; 
+        }
+  detach_interrupts();
 }
 
 bool Motors::is_move_in_progress()
@@ -92,7 +136,7 @@ byte Motors::get_speed_from_percentage(int speed)
       control_byte = (byte) (127./200*speed + 0.5); 
       break;
   }
-  Serial.println(control_byte);
+  
   return control_byte;
 }
 
@@ -123,6 +167,7 @@ void Motors::move(int distance, int speed)
 void Motors::move(int speed)
 {
   byte control_byte = get_speed_from_percentage(speed);
+  Serial.write("OK");
   Serial1.write(control_byte);
   Serial1.write(control_byte+127); 
 }
