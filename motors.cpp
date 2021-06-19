@@ -38,15 +38,26 @@ Motors::Motors()
   pinMode(LEFT_B, INPUT);
   pinMode(RIGHT_A, INPUT);
   pinMode(RIGHT_B, INPUT);
-
+  
+  this->v_l = 0;
+  this->v_r = 0;
+  
   Serial1.begin(MOTOR_BAUDRATE);
+  
   this->stop();
-  steps_left = 0;
-  steps_right = 0;
-  this->move_in_progress = false;
-  this->steps_to_go = -1; 
+  //this->move_in_progress = false;
+  //this->steps_to_go = -1; 
   
 }
+
+void Motors::move()
+{
+  byte control_byte = get_speed_from_percentage(speed);
+  Serial1.write(control_byte);
+  Serial1.write(control_byte+127); 
+}
+
+
 
 void Motors::stop_after_distance()
 {
@@ -62,7 +73,7 @@ bool Motors::distance_reached()
 
 void Motors::newmove(float l, float r)
 {
-  
+  Serial.write("In newmove");
   time_left = micros();
   time_right = micros();
   int perc_left = 10;
@@ -71,6 +82,11 @@ void Motors::newmove(float l, float r)
   while(!(abs(speed_left-l) < delta) &&
         !(abs(speed_right-r) < delta))
         {
+          Serial.print("change speed");
+          Serial.print(speed_left);
+          Serial.print(" ");
+          Serial.println(speed_right);
+          
           if(speed_left < l)
           {
             perc_left++;
@@ -109,7 +125,7 @@ bool Motors::is_move_in_progress()
 byte Motors::get_speed_from_percentage(int speed)
 {
   /* Transformace rychlosti, aby robot jel na spravnou stranu*/
-  speed *= -1;
+  //speed *= -1;
   
   if(speed > 100 || speed < -100)
     return 0x00;
@@ -164,13 +180,6 @@ void Motors::move(int distance, int speed)
 
 }
 
-void Motors::move(int speed)
-{
-  byte control_byte = get_speed_from_percentage(speed);
-  Serial.write("OK");
-  Serial1.write(control_byte);
-  Serial1.write(control_byte+127); 
-}
 
 void Motors::turn(int angle, int speed)
 {
@@ -234,13 +243,13 @@ void Motors::stop()
 /** @brief Funkce pro obsluhu preruseni z praveho motoru */
 void motor_right_interrupt_handler()
 {
-  steps_right++;
+  ticks_r++;
 }
 
 /** @brief Funkce pro obsluhu preruseni z leveho motoru */
 void motor_left_interrupt_handler()
 {
-  steps_left++;
+  ticks_l++;
 }
 
 /** @brief Funkce zapne preruseni na pinech enkoderu */

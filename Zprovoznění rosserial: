@@ -1,0 +1,17 @@
+Zprovoznění rosserial:
+1) cd ~/catkin_ws/src
+2) git clone https://github.com/ros-drivers/rosserial.git
+3) cd ~/catkin_workspace
+4) catkin_make [rosserial]
+5) catkin_make install [rosserial]
+	PS: lepší bez specifikace rosserial
+7) cd ~/Arduino/libraries
+8) rm -rf ros_build (nebo zazálohovat)
+9) rosrun rosserial_arduino make_libraries.py .
+10) Pravděpodobně opravit v (? ros_lib/ros/)msg.h:
+	#include <cstring> na #include <string.h> 
+	všechny výskyty std::memcpy na pouhé memcpy 
+	Důvod: z neznámého důvodu je to udělané přes C++ knihovnu cstring,
+	ale Arduino IDE v základu nem C++ knihovny -> ERR jak prase.
+	Takhle s epoužije klasická Cčková knihovna string.h kde memcpy dělá totéž, co C++ková std::memcpy
+11) Ready to go!
