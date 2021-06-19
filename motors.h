@@ -15,9 +15,9 @@
  #define _MOTORS_H       1
 
 /* Pocet kroku enkoderu pri vyuziti obou kanalu */
-#define STEPS_AB 3072
+#define STEPS_AB 3072.0
 /* Pocet kroku enkoderu pri pouziti jednoho kanalu */
-#define STEPS_ONE_CHANNEL (int) STEPS_AB/4
+#define STEPS_ONE_CHANNEL 768.0
 
 /* Rychlost prenosu po seriove lince pro ovladani motoru */
 #define MOTOR_BAUDRATE 9600
@@ -52,48 +52,9 @@ void detach_interrupts();
 */
 class Motors
 {
-    private:
-        int move_in_progress;
-        int steps_to_go;
     public:
-        /**
-         *  @brief Konstruktor. Zahaji komunikaci po Seriove lince, nastavi spravny pinMode pro piny ekonderu
-         *  a nastavi promenne steps_left a steps_right na nulu.
-        */
         Motors();
-        /**
-         *  @brief Funkce slouzi pro pohyb robota rovne. Pro pohyb dozadu staci nastavit zapornou hodnotu rychlosti NEBO vzdalenosti.  
-         * @param distance vzdalenost v cm
-         * @param speed rychlost v procentech
-         */
-        void move(int distance, int speed);
-        /**
-         * @brief Funkce pro pohyb dopredu bez zastaveni.
-         * @param speed rychlost pohybu
-         */
-        void move(int speed);
-        /**
-         * @brief Funkce slouzici pro zataceni. Pro zataceni doprava zadavejte kladny, pro zataceni doleva zaporny uhel. 
-         * @param angle uhel pro zatoceni ve stupnich
-         * @param speed rychlost v procentech
-         */ 
-        void turn(int angle, int speed);
-        void newmove(float l, float r);
-        /**
-         * @brief Funkce pro jezdeni do kruhu o danem polomeru 
-         * @param diameter polomer kruhu v cm, pocitano od vnejsiho kola do stredu otaceni. 
-         * @param counterclokwise pokud je true, otaceni probiha proti smeru hodinovych rucicek, jinak po smeru
-         */
-        void circle(int diameter, bool counterclokwise=false);
-        /**
-         * @brief Funkce vrati rychlost ve spravnem rozsahu z procentualniho vyjadreni rychlosti
-         * @param speed rychlost v procentech
-         * @todo Implementovat tuto funkci
-         */ 
-        static byte get_speed_from_percentage(int speed);
-        /**
-         * @brief Funkce zastavi oba motory
-         * */
+        void set_power(char motor, byte power);
         void stop();
         /**
          * Function stops motors, sets flag move_in_progress to false and detaches interrupts. 
@@ -115,5 +76,10 @@ class Motors
          * Funkce pro nekonecne zataceni doprava.
          * */
         void turn_right(int speed);   
+   
+        float v_l;
+        float v_r;
+        byte power_r;
+        byte power_l;
 };
  #endif
