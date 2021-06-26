@@ -53,10 +53,10 @@ bool moving = true; // TODO
 void vel_callback(const geometry_msgs::Twist &msg)
 { 
   //nh.loginfo("Message recieved");
-  
-  float v_l = msg.linear.x - (msg.angular.z*L)/2;
-  float v_r = msg.linear.x + (msg.angular.z * L)/2;
-  
+  char result[8];
+  v_l = msg.linear.x - (msg.angular.z*L)/2;
+  v_r = msg.linear.x + (msg.angular.z * L)/2;
+
   /*char result[8]; // Buffer big enough for 7-character float
   dtostrf(v_l, 6, 2, result); // Leave room for too large numbers!
   nh.loginfo(result);
@@ -72,26 +72,10 @@ void vel_callback(const geometry_msgs::Twist &msg)
   {
     v_r = 0;
   }
-  
-  if (v_r < 0)
-  {
-    backward_r = true;
-  }
-  else
-  {
-    backward_r = false;
-  }
-
-  if (v_l < 0)
-  {
-    backward_l = true;
-  }
-  else
-  {
-    backward_l = false;
-  }
-
-
+/*
+  nh.loginfo("v_r cb:");
+  String(v_r, 5).toCharArray(result, 8);
+  nh.loginfo(result);*/
   motors->v_l = v_l;
   motors->v_r = v_r;
   
@@ -117,7 +101,31 @@ void setup() {
   nh.subscribe(sub_vel);
 }
 
-#define CYCLE_DURATION 100
+int k(byte power)
+{
+  int retval = 0;
+  
+  if((power > 0 && power < 64)
+      ||
+     (power > 127 && power < 192))
+  {
+    retval = -1;
+  }
+  else if((power > 64 && power < 128)
+      ||
+     (power > 192 && power < 256))
+  {
+    retval = 1;  
+  }
+  else // power == 64 || 192
+  {
+    retval = 0;
+  }
+    
+  return retval;
+}
+
+#define CYCLE_DURATION 50
 void loop() {
   cycle_start = millis();
   
@@ -129,13 +137,38 @@ void loop() {
     nh.loginfo("time:");
     String(delta, 4).toCharArray(result, 8);
     nh.loginfo(result);*/
-    double v_curr_r =( (double) (( ticks_r * 0.279)/768.0 )/( (double) (millis()-start_time_r) / 1000.0) );
+    double v_curr_r =k(power_r) * ( (double) (( ticks_r * 0.279)/768.0 )/( (double) (millis()-start_time_r) / 1000.0) );
     ticks_r = 0;
     start_time_r= millis();   
+    if (v_r == 0 && abs(power_r - 64) < 3)
+    {
+      power_r = 64;
+    }
+    else
+    {
+      if(v_r > v_curr_r)
+      {
+        if(power_r < 127)
+        {
+          power_r++;
+        }
+        //TODO else loguj, ze jedes na max, ale stejne malo
+      }
+      if(v_r < v_curr_r)
+      {
+        if(power_r > 1)
+        {
+          power_r--;
+        }
+        //todo log, ze pomaleji to uz nepujde
+      }
+    }
+   
+   
     /*unsigned long tr = ticks_r;
     ticks_r = 0;
     start_time_r= millis();   
-    nh.loginfo("tr:");
+    
     sprintf(result,"%lu",tr);
     nh.loginfo(result);
     nh.loginfo("tr*wc:");
@@ -156,9 +189,37 @@ void loop() {
     
 
     
-    double v_curr_l = ( (double) (( (double)ticks_l * WHEEL_CIRCUIT)/(double)STEPS_ONE_CHANNEL )/( (double) (millis()-start_time_l) / 1000.0) );
+    double v_curr_l = k(power_l)*( (double) (( ticks_l * 0.279)/768.0 )/( (double) (millis()-start_time_l) / 1000.0) );
     ticks_l = 0;
     start_time_l = millis();
+    if(v_l == 0 && abs(power_l-192) < 3)
+    {
+      power_l = 192;    
+    }
+    else
+    {
+      if(v_l > v_curr_l)
+      {
+        if(power_l < 255)
+        {
+          power_l++;
+        }
+        //TODO else loguj, ze jedes na max, ale stejne malo
+      }
+      if(v_l < v_curr_l)
+      {
+        if(power_l > 128)
+        {
+          power_l--;
+        }
+        //todo log, ze pomaleji to uz nepujde
+      }
+
+    }
+    
+    
+      motors->set_power('r', power_r);
+      motors->set_power('l', power_l); //TODO
     /*nh.loginfo("ticks_r is:");
     String(ticks_r).toCharArray(result, 8);
     nh.loginfo(result);
@@ -166,7 +227,7 @@ void loop() {
     String(v_curr_r).toCharArray(result, 8);
     nh.loginfo(result);*/
     
-    //R
+   /* //R
     if(abs(v_curr_r-motors->v_r) > eps)
     {
       if (v_curr_r - motors->v_r > 0) 
@@ -207,13 +268,14 @@ void loop() {
          
         }
       }
-    }
-    motors->set_power('r', power_r);
+    }*/
+
+
    /* String(power_r).toCharArray(result, 8);
     nh.loginfo("power is:");
     nh.loginfo(result);*/
     //L
-     if(abs(v_curr_l-motors->v_l) > eps)
+     /*if(abs(v_curr_l-motors->v_l) > eps)
       {
         if (v_curr_l - motors->v_l > 0) //jedu moc rychle
         {
@@ -252,8 +314,9 @@ void loop() {
             power_l = power_l == 128 ? power_l : power_l -1;
           }
         }
-      }
-      motors->set_power('l', power_l); //TODO
+      }*/
+      
+    
       
     //vzorkovani rychlosti po -+ 100 ms
     
