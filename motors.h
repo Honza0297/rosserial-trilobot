@@ -54,32 +54,15 @@ class Motors
 {
     public:
         Motors();
-        void set_power(char motor, byte power);
-        void stop();
-        /**
-         * Function stops motors, sets flag move_in_progress to false and detaches interrupts. 
-         */
-        void stop_after_distance();
-        /**
-         * if there is a movement in progress, function return whether the movement should be stopped. 
-         */
-        bool distance_reached();
-        /**
-         * getter of move_in_progress var
-         */
-        bool is_move_in_progress();
-        /**
-         * @brief Funkce pro nekonecne zataceni doleva.
-         * */
-        void turn_left(int speed);
-        /**
-         * Funkce pro nekonecne zataceni doprava.
-         * */
-        void turn_right(int speed);   
-   
+        void set_power(char motor);
+        void stop();  
+        void update();
+        int get_dir_coef(byte power);
         float v_l;
         float v_r;
         byte power_r;
         byte power_l;
+        unsigned long start_time_r;
+        unsigned long start_time_l; 
 };
  #endif

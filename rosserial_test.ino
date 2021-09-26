@@ -14,75 +14,93 @@
       * Zasilany v msg Sonar_data na topic  trilobot/sonars/distance
 **/
 
+#define DEBUG_ENABLED 1
+
 #include <ros.h>
 
 #include <std_msgs/Empty.h>
 #include <geometry_msgs/Twist.h>
+#include <std_msgs/Float32.h>
+#include <trilobot/Sonar_data.h>
+#include <trilobot/Battery_state.h>
 #include "motors.h"
-const char topic_cmd_vel[] = "trilobot/cmd_vel";
+#include "srf08.h"
 
+const char topic_cmd_vel[] = "trilobot/cmd_vel";
+const char topic_sonars_request[] = "trilobot/sonars_req";
+const char topic_sonars_response[] = "trilobot/sonars_resp";
+const char topic_battery_request[] = "trilobot/battery_req";
+const char topic_battery_response[] = "trilobot/battery_resp";
+
+trilobot::Sonar_data sonar_msg;
+trilobot::Battery_state battery_msg;
 ros::NodeHandle nh;
 
 Motors *motors;
+Sonars *sonars;
 
 ros::Subscriber<geometry_msgs::Twist> sub_vel(topic_cmd_vel, &vel_callback);
-
-float v_r = 0;
-float v_l = 0;
-
-bool backward_r = false;
-bool backward_l = false;
+ros::Subscriber<std_msgs::Empty> sub_son_req(topic_sonars_request, &sonars_callback);
+ros::Publisher sonar_pub(topic_sonars_response, &sonar_msg);
+ros::Publisher batt_pub(topic_battery_response, &battery_msg);
+ros::Subscriber<std_msgs::Empty> batt_sub(topic_battery_request, &battery_callback);
 
 extern volatile unsigned long ticks_r;
 extern volatile unsigned long ticks_l;
-
-// 64, 192 ... stop values
-byte power_r = 64;
-byte power_l = 192;
-
-unsigned long start_time_r = 0;
-unsigned long start_time_l = 0; 
 bool time_set = false;
 
 float L = 0.2; //(distance between wheels)
 float eps = 0.0024; //pripustna odchylka rychlost, 2,4 mm/s
 unsigned long cycle_start = 0;
 bool moving = true; // TODO
+bool measuring = false;
+unsigned long measure_start = 0;
 #define VEL_MIN 0.02
+
+void sonars_callback(const std_msgs::Empty &msg)
+{
+  sonars->set_measurement();
+  measuring = true;
+  measure_start = millis();
+}
+
+void battery_callback(const std_msgs::Empty &msg)
+{
+  float batt0 = analogRead(A0)* 5.0/1023.0 * 147.0/100.0;
+  float batt1 = analogRead(A1) * 5.0/1023.0 * 200.0/100.0 - batt0;
+  float batt2 = analogRead(A2) * 5.0/1023.0 * 320.0/100.0 - batt0 - batt1;
+  float batt3 = analogRead(A3) * 5.0/1023.0 * 400.0/100.0 - batt0 - batt1 - batt2;
+  
+  battery_msg.cell1 = batt0;
+  battery_msg.cell2 = batt1;
+  battery_msg.cell3 = batt2;
+  battery_msg.cell4 = batt3;
+  
+  batt_pub.publish(&battery_msg);
+}
 
 void vel_callback(const geometry_msgs::Twist &msg)
 { 
-  //nh.loginfo("Message recieved");
+  #if DEBUG_ENABLED
   char result[8];
-  v_l = msg.linear.x - (msg.angular.z*L)/2;
-  v_r = msg.linear.x + (msg.angular.z * L)/2;
+  #endif
+  motors->v_l = msg.linear.x - (msg.angular.z*L)/2;
+  motors->v_r = msg.linear.x + (msg.angular.z * L)/2;
 
-  /*char result[8]; // Buffer big enough for 7-character float
-  dtostrf(v_l, 6, 2, result); // Leave room for too large numbers!
-  nh.loginfo(result);
-  dtostrf(v_r, 6, 2, result); // Leave room for too large numbers!
-  nh.loginfo(result);*/
-
-  if(abs(v_l) < VEL_MIN)
+  if(abs(motors->v_l) < VEL_MIN)
   {
-    v_l = 0;
+    motors->v_l = 0;
   }
 
-  if(abs(v_r) < VEL_MIN)
+  if(abs(motors->v_r) < VEL_MIN)
   {
-    v_r = 0;
+    motors->v_r = 0;
   }
-/*
-  nh.loginfo("v_r cb:");
-  String(v_r, 5).toCharArray(result, 8);
-  nh.loginfo(result);*/
-  motors->v_l = v_l;
-  motors->v_r = v_r;
   
-  if (!time_set && (v_r || v_l) )
+  if (!time_set && (motors->v_r || motors->v_l) )
   {
-    start_time_r = millis();
-    start_time_l = millis();
+    motors->start_time_r = millis();
+    motors->start_time_l = millis();
     ticks_r = 0;
     ticks_l = 0;
     time_set = true;
@@ -93,239 +111,55 @@ void vel_callback(const geometry_msgs::Twist &msg)
 
 
 void setup() {
-  //Serial.begin(57600);
   motors = new Motors();
+  sonars = new Sonars();
 	nh.initNode();
-  //nh.loginfo("Motor movement done!");
  
   nh.subscribe(sub_vel);
+  nh.subscribe(sub_son_req);
+  nh.advertise(sonar_pub);
+
+  nh.subscribe(batt_sub);
+  nh.advertise(batt_pub);
+  pinMode(A0, INPUT);
+  pinMode(A1, INPUT);
+  pinMode(A2, INPUT);
+  pinMode(A3, INPUT);
 }
 
-int k(byte power)
+
+#define CYCLE_DURATION 50 //ms
+#define SRF08_MEASURE_TIME 70
+void loop() 
 {
-  int retval = 0;
-  
-  if((power > 0 && power < 64)
-      ||
-     (power > 127 && power < 192))
-  {
-    retval = -1;
-  }
-  else if((power > 64 && power < 128)
-      ||
-     (power > 192 && power < 256))
-  {
-    retval = 1;  
-  }
-  else // power == 64 || 192
-  {
-    retval = 0;
-  }
-    
-  return retval;
-}
-
-#define CYCLE_DURATION 50
-void loop() {
   cycle_start = millis();
   
   // motor part
   if(moving)
-  {char result[10]; // Buffer big enough for 7-character float
+  {
+    motors->update();
+    //char result[10]; // Buffer big enough for 7-character float
+  }
 
-  /*  double delta = (double) (millis()-start_time_r) / 1000.0 ;
-    nh.loginfo("time:");
-    String(delta, 4).toCharArray(result, 8);
-    nh.loginfo(result);*/
-    double v_curr_r =k(power_r) * ( (double) (( ticks_r * 0.279)/768.0 )/( (double) (millis()-start_time_r) / 1000.0) );
-    ticks_r = 0;
-    start_time_r= millis();   
-    if (v_r == 0 && abs(power_r - 64) < 3)
-    {
-      power_r = 64;
-    }
-    else
-    {
-      if(v_r > v_curr_r)
-      {
-        if(power_r < 127)
+  if(measuring)
+  {
+    if(millis() - measure_start >= SRF08_MEASURE_TIME) // 70 == cas od odeslani prikazu po zmereni
         {
-          power_r++;
+          measuring= false;
+          measure_start = millis();
+          sonar_data data = sonars->get_distances();
+          sonar_msg.front = data.front;
+          sonar_msg.front_right = data.front_right;
+          sonar_msg.front_left = data.front_left;
+          sonar_msg.back_right= data.back_right;
+          sonar_msg.back_left = data.back_left;
+          sonar_msg.back = data.back;
+          sonar_pub.publish(&sonar_msg);
         }
-        //TODO else loguj, ze jedes na max, ale stejne malo
-      }
-      if(v_r < v_curr_r)
-      {
-        if(power_r > 1)
-        {
-          power_r--;
-        }
-        //todo log, ze pomaleji to uz nepujde
-      }
-    }
-   
-   
-    /*unsigned long tr = ticks_r;
-    ticks_r = 0;
-    start_time_r= millis();   
-    
-    sprintf(result,"%lu",tr);
-    nh.loginfo(result);
-    nh.loginfo("tr*wc:");
-    String(( (double)tr * 0.279),3).toCharArray(result, 8);
-    nh.loginfo(result);
-
-    nh.loginfo("tr*wc/soc:");
-    float x = (float)tr*0.279/768.0;
-    sprintf(result, "%f", x);
-    nh.loginfo(result);
-
-    nh.loginfo("tr*wc/soc/time:");
-    String(( (double) (( (double)tr * WHEEL_CIRCUIT)/(double)STEPS_ONE_CHANNEL )/( (double) (millis()-start_time_l) / 1000.0) ),5).toCharArray(result, 8);
-    nh.loginfo(result);
-    nh.loginfo("vcr:");
-    String(v_curr_r, 5).toCharArray(result, 8);
-    nh.loginfo(result);*/
-    
-
-    
-    double v_curr_l = k(power_l)*( (double) (( ticks_l * 0.279)/768.0 )/( (double) (millis()-start_time_l) / 1000.0) );
-    ticks_l = 0;
-    start_time_l = millis();
-    if(v_l == 0 && abs(power_l-192) < 3)
-    {
-      power_l = 192;    
-    }
-    else
-    {
-      if(v_l > v_curr_l)
-      {
-        if(power_l < 255)
-        {
-          power_l++;
-        }
-        //TODO else loguj, ze jedes na max, ale stejne malo
-      }
-      if(v_l < v_curr_l)
-      {
-        if(power_l > 128)
-        {
-          power_l--;
-        }
-        //todo log, ze pomaleji to uz nepujde
-      }
-
-    }
-    
-    
-      motors->set_power('r', power_r);
-      motors->set_power('l', power_l); //TODO
-    /*nh.loginfo("ticks_r is:");
-    String(ticks_r).toCharArray(result, 8);
-    nh.loginfo(result);
-    nh.loginfo("v_curr_r is:");
-    String(v_curr_r).toCharArray(result, 8);
-    nh.loginfo(result);*/
-    
-   /* //R
-    if(abs(v_curr_r-motors->v_r) > eps)
-    {
-      if (v_curr_r - motors->v_r > 0) 
-      {
-        if(backward_r)
-        {
-          if(power_r <= 64)
-          {
-             power_r = power_r == 127 ? power_r : power_r+1; 
-          }
-          else
-          {
-            power_r = power_r == 1 ? power_r : power_r-1;
-          }
-        }
-        else
-        {
-          if(power_r >= 64)
-          {
-            power_r = power_r == 1 ? power_r : power_r-1;
-          }
-          else
-          {
-            power_r = power_r == 127 ? power_r : power_r+1; 
-          }
-          
-        }
-      }
-      else if(v_curr_r - motors->v_r < 0)
-      {
-        if(backward_r)
-        {
-          power_r = power_r == 127 ? power_r : power_r+1; 
-        }
-        else
-        {
-          power_r = power_r == 1 ? power_r : power_r-1;
-         
-        }
-      }
-    }*/
-
-
-   /* String(power_r).toCharArray(result, 8);
-    nh.loginfo("power is:");
-    nh.loginfo(result);*/
-    //L
-     /*if(abs(v_curr_l-motors->v_l) > eps)
-      {
-        if (v_curr_l - motors->v_l > 0) //jedu moc rychle
-        {
-        if(backward_l)
-        {
-          if(power_l <= 192)
-          {
-             power_l = power_l == 127 ? power_l : power_l+1; 
-          }
-          else
-          {
-            power_l = power_l == 1 ? power_l : power_l-1;
-          }
-        }
-        else
-        {
-          if(power_l >= 192)
-          {
-            power_l = power_l == 1 ? power_l : power_l-1;
-          }
-          else
-          {
-            power_l = power_l == 127 ? power_l : power_l+1; 
-          }
-          
-        }
-        }
-        else if(v_curr_l - motors->v_l < 0)
-        {
-          if(backward_l)
-          {
-            power_l = power_l == 255 ? power_l : power_l+1; 
-          }
-          else
-          {
-            power_l = power_l == 128 ? power_l : power_l -1;
-          }
-        }
-      }*/
-      
-    
-      
-    //vzorkovani rychlosti po -+ 100 ms
-    
-    //ticks_r = 0;
-   // ticks_l = 0;
-    }
+  }
   
   nh.spinOnce();
- // nh.loginfo("check");
+ // nh.("loginfocheck");
   //NOTE: epxerimental value, can be something in range 1 to CYCLE_DURATION...  
   delay((millis()-cycle_start) < CYCLE_DURATION ? CYCLE_DURATION - (millis()-cycle_start) : 1);
   //while(1);

@@ -25,13 +25,13 @@ void Sonars::set_measurement(byte unit, uint8_t address)
   Wire.write(unit);
   Wire.endTransmission();
   /*V dokumentaci se pise 60 ms, ale to nemusi stacit*/
-  delay(100);
+  //delay(100);
 }
 
 sonar_data Sonars::get_distances(byte unit)
 {
   uint16_t data[6];
-  this->set_measurement(unit, SRF08_ADDRESS_BROADCAST);
+  //this->set_measurement(unit, SRF08_ADDRESS_BROADCAST);
   
   /* Ignorovani prvnich dvou registru*/
   for(int i = 0; i < NUM_OF_SONARS; i++)

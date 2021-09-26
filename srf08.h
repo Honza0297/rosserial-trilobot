@@ -18,12 +18,12 @@
 */
 
 
-#define SRF08_ADDRESS_FRONT 0x70
+#define SRF08_ADDRESS_FRONT 0x74
 #define SRF08_ADDRESS_FRONT_LEFT 0x71
 #define SRF08_ADDRESS_FRONT_RIGHT 0x72
-#define SRF08_ADDRESS_BACK_LEFT 0x73
-#define SRF08_ADDRESS_BACK_RIGHT 0x74
-#define SRF08_ADDRESS_BACK 0x75
+#define SRF08_ADDRESS_BACK_LEFT 0x75
+#define SRF08_ADDRESS_BACK_RIGHT 0x70
+#define SRF08_ADDRESS_BACK 0x73
 
 #define SRF08_ADDRESS_BROADCAST 0x00
 #define NUM_OF_SONARS 6
@@ -74,7 +74,6 @@ class Sonars
         * @return Vzdalenost v pozadovane jednotce nebo -1 pri problemu
         */
         sonar_data get_distances(byte unit = CM);
-    private:
         /**
         * @brief Funkce nastavuje mereni pomoci zapisu pozdadovane jednotky do REG_CMD.
         */
