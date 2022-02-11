@@ -45,8 +45,8 @@ Motors::Motors()
   pinMode(RIGHT_A, INPUT);
   pinMode(RIGHT_B, INPUT);
   
-  this->v_l = 0;
-  this->v_r = 0;
+  this->vel_l = 0;
+  this->vel_r = 0;
   this->power_r = 64;
   this->power_l = 192;
   this->start_time_r = 0;
@@ -104,13 +104,13 @@ void Motors::update()
     double v_curr_r = this->get_dir_coef(this->power_r) * ( (double) (( ticks_r * 0.279)/768.0 )/( (double) (millis()-this->start_time_r) / 1000.0) );
     ticks_r = 0;
     this->start_time_r= millis();   
-    if (this->v_r == 0 && abs(this->power_r - 64) < 3)
+    if (this->vel_r == 0 && abs(this->power_r - 64) < 3)
     {
       this->power_r = 64;
     }
     else
     {
-      if(this->v_r > v_curr_r)
+      if(this->vel_r > v_curr_r)
       {
         if(this->power_r < 127)
         {
@@ -118,7 +118,7 @@ void Motors::update()
         }
         //TODO else loguj, ze jedes na max, ale stejne malo
       }
-      if(this->v_r < v_curr_r)
+      if(this->vel_r < v_curr_r)
       {
         if(this->power_r > 1)
         {
@@ -131,13 +131,13 @@ void Motors::update()
     double v_curr_l = get_dir_coef(this->power_l)*( (double) (( ticks_l * 0.279)/768.0 )/( (double) (millis()-this->start_time_l) / 1000.0) );
     ticks_l = 0;
     this->start_time_l = millis();
-    if(this->v_l == 0 && abs(this->power_l-192) < 3)
+    if(this->vel_l == 0 && abs(this->power_l-192) < 3)
     {
       this->power_l = 192;    
     }
     else
     {
-      if(this->v_l > v_curr_l)
+      if(this->vel_l > v_curr_l)
       {
         if(this->power_l < 255)
         {
@@ -145,7 +145,7 @@ void Motors::update()
         }
         //TODO else loguj, ze jedes na max, ale stejne malo
       }
-      if(this->v_l < v_curr_l)
+      if(this->vel_l < v_curr_l)
       {
         if(this->power_l > 128)
         {

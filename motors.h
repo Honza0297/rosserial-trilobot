@@ -28,6 +28,9 @@
 /* Obvod hnanych kol robota */ // zmenena hodnota, puvodne to bylo v cm (=27.9)
 #define WHEEL_CIRCUIT 0.279
 
+/* Vzdálenost mezi koly, 20 cm */ 
+#define INTERWHEEL_DISTANCE 0.2
+
 /* Piny pro kanaly enkoderu */
 #define LEFT_A 2
 #define LEFT_B 53
@@ -36,6 +39,10 @@
 #define RIGHT_B 52
 
 #define TURN_RADIUS 40
+
+/* minimalni rychlost, m/s*/
+#define MIN_VELOCITY 0.02
+
 
 
 /**
@@ -58,8 +65,8 @@ class Motors
         void stop();  
         void update();
         int get_dir_coef(byte power);
-        float v_l;
-        float v_r;
+        float vel_l;
+        float vel_r;
         byte power_r;
         byte power_l;
         unsigned long start_time_r;

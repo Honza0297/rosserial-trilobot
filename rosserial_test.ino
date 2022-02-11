@@ -4,51 +4,65 @@
 
 #define DEBUG_ENABLED 1
 
-// generic includes
+/* Generic includes */
 /* nothing*/
 
-//ros includes
+/* ros includes */
 #include <ros.h>  
 
-// Generic messages
+/* Generic messages */
 #include <std_msgs/Empty.h>
 #include <geometry_msgs/Twist.h>
 #include <std_msgs/Float32.h>
 
-//Trilobot specific messages - mostly structures of nums
+/* Trilobot specific messages - mostly structures of nums */
 #include <trilobot/Odometry.h>
 #include <trilobot/Sonar_data.h>
 #include <trilobot/Battery_state.h>
 
-// trilobot includes
+/* Trilobot includes */ 
 #include "motors.h"
 #include "srf08.h"
 #include "topics.h"
 
+/* Basic definitions used through the whole file */
+
+/* Messages */
 trilobot::Sonar_data sonar_msg;
 trilobot::Battery_state battery_msg;
+trilobot::Odometry_msg odometry_msg;
+
+/* Node handle - "that thingy that creates roserial nodes" */
 ros::NodeHandle nh;
 
+/* HW handles */ 
 Motors *motors;
 Sonars *sonars;
 
-ros::Subscriber<geometry_msgs::Twist> sub_vel(topic_cmd_vel, &vel_callback);
-ros::Subscriber<std_msgs::Empty> sub_son_req(topic_sonars_request, &sonars_callback);
+/* Function declarations for easier overview */ 
+ros::Subscriber<geometry_msgs::Twist> vel_sub(topic_cmd_vel, &vel_callback);
+ros::Publisher odometry_pub(topic_trilobot_odometry, &odometry_msg);
+
+ros::Subscriber<std_msgs::Empty> sonar_sub(topic_sonars_request, &sonars_callback);
 ros::Publisher sonar_pub(topic_sonars_response, &sonar_msg);
+
 ros::Publisher batt_pub(topic_battery_response, &battery_msg);
 ros::Subscriber<std_msgs::Empty> batt_sub(topic_battery_request, &battery_callback);
 
-extern volatile unsigned long ticks_r;
-extern volatile unsigned long ticks_l;
+/* Control flags */
 bool time_set = false;
-
-float L = 0.2; //(distance between wheels)
-float eps = 0.0024; //pripustna odchylka rychlost, 2,4 mm/s
-unsigned long cycle_start = 0;
 bool moving = true; // TODO
 bool measuring = false;
+
+unsigned long cycle_start = 0;
 unsigned long measure_start = 0;
-#define VEL_MIN 0.02
+
+/* extern variables for odometry */
+extern volatile unsigned long ticks_r;
+extern volatile unsigned long ticks_l;
+
+
+//float L = 0.2; //del if everything works
 
 void sonars_callback(const std_msgs::Empty &msg)
 {
@@ -77,20 +91,22 @@ void vel_callback(const geometry_msgs::Twist &msg)
   #if DEBUG_ENABLED
   char result[8];
   #endif
-  motors->v_l = msg.linear.x - (msg.angular.z*L)/2;
-  motors->v_r = msg.linear.x + (msg.angular.z * L)/2;
 
-  if(abs(motors->v_l) < VEL_MIN)
+  motors->vel_l = msg.linear.x - (msg.angular.z*INTERWHEEL_DISTANCE)/2;
+  motors->vel_r = msg.linear.x + (msg.angular.z * INTERWHEEL_DISTANCE)/2;
+
+  
+  if(abs(motors->vel_l) < MIN_VELOCITY)
   {
-    motors->v_l = 0;
+    motors->vel_l = 0;
   }
 
-  if(abs(motors->v_r) < VEL_MIN)
+  if(abs(motors->vel_r) < MIN_VELOCITY)
   {
-    motors->v_r = 0;
+    motors->vel_r = 0;
   }
   
-  if (!time_set && (motors->v_r || motors->v_l) )
+  if (!time_set && (motors->vel_r || motors->vel_l) )
   {
     motors->start_time_r = millis();
     motors->start_time_l = millis();
@@ -108,8 +124,8 @@ void setup() {
   sonars = new Sonars();
 	nh.initNode();
  
-  nh.subscribe(sub_vel);
-  nh.subscribe(sub_son_req);
+  nh.subscribe(vel_sub);
+  nh.subscribe(sonar_sub);
   nh.advertise(sonar_pub);
 
   nh.subscribe(batt_sub);
