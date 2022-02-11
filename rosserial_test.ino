@@ -1,36 +1,29 @@
 /*************************************************/
-/** Testovaci kod pro ovladani Trilobota 2.0     
- Podporuje:                                   
- * Jizdu (pevne dana vzdalenost i dokud se nerekne stop
-      * Zpravy Motors_(continual_)move na spravne topicy (trilobot/motors/(continual_)move), 
-        Empty msg na topic motors/stop              
- * Otaceni (opet o pevne dany uhel nebo dokud se nereknce stop)
-      * Zpravy Motors_(continual_)turn.msg na motors/(cpontinual_)turn 
-      * Empty msg na topic motors/stop
- * Jizda i otaceni davaji vedet o konci pohybu (jak v pripade kontinualniho, tak pevne daneho pohybu)
-    na topic trilobot/motors/confirmation
- * Ziskavani dat ze 6 senzoru SRF-08 (zatim jen vzdalenost)     
-      * Zadost pomoci Empty msg na topic trilobot/sonars/distance_request
-      * Zasilany v msg Sonar_data na topic  trilobot/sonars/distance
-**/
+/** Testovaci kod pro ovladani Trilobota 2.0    **/
+/*************************************************/
 
 #define DEBUG_ENABLED 1
 
-#include <ros.h>
+// generic includes
+/* nothing*/
 
+//ros includes
+#include <ros.h>  
+
+// Generic messages
 #include <std_msgs/Empty.h>
 #include <geometry_msgs/Twist.h>
 #include <std_msgs/Float32.h>
+
+//Trilobot specific messages - mostly structures of nums
+#include <trilobot/Odometry.h>
 #include <trilobot/Sonar_data.h>
 #include <trilobot/Battery_state.h>
+
+// trilobot includes
 #include "motors.h"
 #include "srf08.h"
-
-const char topic_cmd_vel[] = "trilobot/cmd_vel";
-const char topic_sonars_request[] = "trilobot/sonars_req";
-const char topic_sonars_response[] = "trilobot/sonars_resp";
-const char topic_battery_request[] = "trilobot/battery_req";
-const char topic_battery_response[] = "trilobot/battery_resp";
+#include "topics.h"
 
 trilobot::Sonar_data sonar_msg;
 trilobot::Battery_state battery_msg;
