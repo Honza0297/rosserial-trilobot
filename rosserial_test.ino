@@ -25,7 +25,14 @@
 #include "srf08.h"
 #include "topics.h"
 
+
+
 /* Basic definitions used through the whole file */
+
+#define CYCLE_DURATION 50 //ms
+#define SRF08_MEASURE_TIME 70
+#define VEL_CMD_TIMEOUT 3*CYCLE_DURATION //TODO
+
 
 /* Messages */
 trilobot::Sonar_data sonar_msg;
@@ -51,7 +58,12 @@ ros::Subscriber<std_msgs::Empty> batt_sub(topic_battery_request, &battery_callba
 
 /* Control flags */
 bool time_set = false;
-bool moving = true; // TODO
+
+enum State {move = 1, stop = 0}; 
+State motor_state = stop;
+int cmd_vel_timestamp = 0;
+
+
 bool measuring = false;
 
 unsigned long cycle_start = 0;
@@ -88,6 +100,11 @@ void vel_callback(const geometry_msgs::Twist &msg)
   #if DEBUG_ENABLED
   char result[8];
   #endif
+  if (motor_state != move)
+  { 
+    motor_state = move;
+  }
+  cmd_vel_timestamp = millis();
 
   motors->vel_l = msg.linear.x - (msg.angular.z*INTERWHEEL_DISTANCE)/2;
   motors->vel_r = msg.linear.x + (msg.angular.z * INTERWHEEL_DISTANCE)/2;
@@ -138,21 +155,25 @@ void setup() {
 }
 
 
-#define CYCLE_DURATION 50 //ms
-#define SRF08_MEASURE_TIME 70
+
 
 void loop() 
 {
   cycle_start = millis();
   
   // motor part
-  if(moving)
+  if(motor_state == move)
   {
     odometry_msg.right = ticks_r;
     odometry_msg.left = ticks_l;
-    odometry_pub.publish(&odometry.msg);
+    odometry_pub.publish(&odometry_msg);
     motors->update();
-    //char result[10]; // Buffer big enough for 7-character float
+    if((millis() - cmd_vel_timestamp) >= VEL_CMD_TIMEOUT)
+    {
+      motors->vel_l = 0;
+      motors->vel_r = 0;
+    }    
+    //TODO jak prehazovat states??
   }
 
   if(measuring)
@@ -174,8 +195,6 @@ void loop()
   nh.spinOnce();
 
 
- // nh.("loginfocheck");
   //NOTE: epxerimental value, can be something in range 1 to CYCLE_DURATION...  
   delay((millis()-cycle_start) < CYCLE_DURATION ? CYCLE_DURATION - (millis()-cycle_start) : 1);
-  //while(1);
 }
