@@ -30,7 +30,7 @@
 /* Messages */
 trilobot::Sonar_data sonar_msg;
 trilobot::Battery_state battery_msg;
-trilobot::Odometry_msg odometry_msg;
+trilobot::Odometry odometry_msg;
 
 /* Node handle - "that thingy that creates roserial nodes" */
 ros::NodeHandle nh;
@@ -60,9 +60,6 @@ unsigned long measure_start = 0;
 /* extern variables for odometry */
 extern volatile unsigned long ticks_r;
 extern volatile unsigned long ticks_l;
-
-
-//float L = 0.2; //del if everything works
 
 void sonars_callback(const std_msgs::Empty &msg)
 {
@@ -125,11 +122,15 @@ void setup() {
 	nh.initNode();
  
   nh.subscribe(vel_sub);
+  nh.advertise(odometry_pub);
+
   nh.subscribe(sonar_sub);
   nh.advertise(sonar_pub);
 
   nh.subscribe(batt_sub);
   nh.advertise(batt_pub);
+
+
   pinMode(A0, INPUT);
   pinMode(A1, INPUT);
   pinMode(A2, INPUT);
@@ -139,6 +140,7 @@ void setup() {
 
 #define CYCLE_DURATION 50 //ms
 #define SRF08_MEASURE_TIME 70
+
 void loop() 
 {
   cycle_start = millis();
@@ -146,6 +148,9 @@ void loop()
   // motor part
   if(moving)
   {
+    odometry_msg.right = ticks_r;
+    odometry_msg.left = ticks_l;
+    odometry_pub.publish(&odometry.msg);
     motors->update();
     //char result[10]; // Buffer big enough for 7-character float
   }
@@ -166,8 +171,9 @@ void loop()
           sonar_pub.publish(&sonar_msg);
         }
   }
-  
   nh.spinOnce();
+
+
  // nh.("loginfocheck");
   //NOTE: epxerimental value, can be something in range 1 to CYCLE_DURATION...  
   delay((millis()-cycle_start) < CYCLE_DURATION ? CYCLE_DURATION - (millis()-cycle_start) : 1);
