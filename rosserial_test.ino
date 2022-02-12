@@ -31,7 +31,6 @@
 
 #define CYCLE_DURATION 50 //ms
 #define SRF08_MEASURE_TIME 70
-#define VEL_CMD_TIMEOUT 3*CYCLE_DURATION //TODO
 
 
 /* Messages */
@@ -43,7 +42,7 @@ trilobot::Odometry odometry_msg;
 ros::NodeHandle nh;
 
 /* HW handles */ 
-Motors *motors;
+Motor_driver *md;
 Sonars *sonars;
 
 /* Function declarations for easier overview */ 
@@ -103,37 +102,18 @@ void vel_callback(const geometry_msgs::Twist &msg)
   { 
     motor_state = move;
   }
-  cmd_vel_timestamp = millis();
+  //cmd_vel_timestamp = millis();
+  float speed_l = msg.linear.x - (msg.angular.z*INTERWHEEL_DISTANCE)/2;
+  float speed_r = msg.linear.x + (msg.angular.z * INTERWHEEL_DISTANCE)/2;
 
-  motors->vel_l = msg.linear.x - (msg.angular.z*INTERWHEEL_DISTANCE)/2;
-  motors->vel_r = msg.linear.x + (msg.angular.z * INTERWHEEL_DISTANCE)/2;
+  md->set_desired_speed(speed_l, speed_r);
 
-  
-  if(abs(motors->vel_l) < MIN_VELOCITY)
-  {
-    motors->vel_l = 0;
-  }
-
-  if(abs(motors->vel_r) < MIN_VELOCITY)
-  {
-    motors->vel_r = 0;
-  }
-  
-  if (motors->vel_r || motors->vel_l)//(!time_set && (motors->vel_r || motors->vel_l) )
-  {
-    motors->start_time_r = millis();
-    motors->start_time_l = millis();
-    ticks_r = 0;
-    ticks_l = 0;
-   // time_set = true;
-  }
-  
   return;
 }
 
 
 void setup() {
-  motors = new Motors();
+  md = new Motor_driver(timeout = 3*CYCLE_DURATION);
   sonars = new Sonars();
 	nh.initNode();
  
@@ -160,24 +140,16 @@ void loop()
 {
   cycle_start = millis();
   
-  // motor part
-  if(motor_state == move)
-  {
-    odometry_msg.right = ticks_r;
-    odometry_msg.left = ticks_l;
-    odometry_pub.publish(&odometry_msg);
-    motors->update();
-    if((millis() - cmd_vel_timestamp) >= VEL_CMD_TIMEOUT)
-    {
-      motors->vel_l = 0;
-      motors->vel_r = 0;
-    }    
-    if(!motors->moving())
-    {
-      motor_state = stop;
-    }
-    //TODO jak prehazovat states??
-  }
+  // motor part - dont change md update and odometry sending!
+
+  odometry_msg.right = ticks_r;
+  odometry_msg.left = ticks_l;
+  odometry_pub.publish(&odometry_msg);
+
+  md->update();
+  
+    
+  
 
   if(measuring)
   {

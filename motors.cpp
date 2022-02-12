@@ -20,9 +20,6 @@
 volatile unsigned long ticks_r = 0;
 volatile unsigned long ticks_l = 0; 
 
-
-volatile int steps_right = 0;
-volatile int steps_left = 0;
 volatile double time_left = 0;
 volatile double time_right = 0;
 
@@ -37,8 +34,9 @@ void motor_left_interrupt_handler();
 void attach_interrupts();
 void detach_interrupts();
 
-Motor_driver::Motor_driver()
+Motor_driver::Motor_driver(int timeout)
 {
+  this->timeout = timeout;
   this->motors = new Motors();
   this->set_desired_speed(0,0);
   this->timestamp_r = 0;
@@ -59,97 +57,109 @@ void Motor_driver::stop()
 
 void Motor_driver::set_desired_speed(float l, float r)
 {
-  this->desired_speed_l = l;
-  this->desired_speed_r = r;
+  this->last_update = millis();
+
+   if(abs(l) < MIN_VELOCITY)
+  {
+    this->desired_speed_l = 0;
+  }
+  else
+  {
+    this->desired_speed_l = l;
+  }
+
+  if(abs(r) < MIN_VELOCITY)
+  {
+    this->desired_speed_r = 0;
+  }
+  else
+  {
+    this->desired_speed_r = r;
+  }
+
+
+
+ if (motors->vel_r || motors->vel_l)//(!time_set && (motors->vel_r || motors->vel_l) )
+  {
+    this->timestamp_l = millis();
+    this->timestamp_r = millis();
+    ticks_r = 0; //WTF
+    ticks_l = 0; //WTF 
+   // time_set = true;
+  }
 }
 
 
 void Motor_driver::update()
 {
+ /* if (this->desired_speed_l == 0 && this->desired_speed_r == 0){}*/
 
-}       
-
-
-
-
-Motors::Motors()
-{
-  pinMode(LEFT_A, INPUT);
-  pinMode(LEFT_B, INPUT);
-  pinMode(RIGHT_A, INPUT);
-  pinMode(RIGHT_B, INPUT);
-  
-  this->vel_l = 0;
-  this->vel_r = 0;
-  this->power_r = POWER_STOP_R;
-  this->power_l = POWER_STOP_L;
-  this->start_time_r = 0;
-  this->start_time_l = 0; 
-  Serial1.begin(MOTOR_BAUDRATE);
-  
-  this->stop();
-  attach_interrupts();
-  //this->move_in_progress = false;
-  //this->steps_to_go = -1; 
-  
-}
-
-bool Motors::moving()
-{
-  bool ret;
-
-  if (power_l == POWER_STOP_L || this->power_r == POWER_STOP_R)
+  //if no update for too long, stop
+  if((millis() - this->last_update) >= this->timeout)
   {
-    ret = false;
+    motors->vel_l = 0;
+    motors->vel_r = 0;
+    return;
+  }    
+
+  float current_speed_r = this->motors->get_dir_coef(this->motors->power_r) * 
+                          (
+                            (double)(((ticks_r - this->last_ticks_r) * 0.279)/768.0) / ((double)(millis()-this->timestamp_r) / 1000.0) 
+                          );
+  this->last_ticks_r = ticks_r;
+  this->timestamp_r = millis();
+  
+  
+  byte power_r = this->motors->get_power('r');
+  if (this->desired_speed_r == 0 && abs(this->motors->power_r - POWER_STOP_R) < 3)
+  {
+    power_r = POWER_STOP_R;
   }
   else
   {
-    ret = true;
+    if(this->desired_speed_r > current_speed_r)
+    {
+      power_r = power_r < 127 ? power_r++ : power_r;
+      //TODO loguj pokud jedes na max, ale stejne je to malo (druhy case)
+    }
+    if(this->desired_speed_r < current_speed_r)
+    {
+      power_r = power_r > 1 ? power_r-- : power_r;
+      //todo log, ze pomaleji to uz nepujde v pripade druheho pripadu
+    }
   }
 
-  return ret;
-
-}
-
-void Motors::set_power(char motor)
-{
-  switch (motor)
-  {
-    case 'r':
-      Serial1.write(this->power_r);
-      break;
-    case 'l':
-      Serial1.write(this->power_l);
-      break;
-    default:
-    {}
-  }
-  return;  
-}
-
-int Motors::get_dir_coef(byte power)
-{
-  int retval = 0;
+  float current_speed_l = this->motors->get_dir_coef(this->motors->power_l) * 
+                          (
+                            (double)(((ticks_l - this->last_ticks_l) * 0.279)/768.0) / ((double)(millis()-this->timestamp_l) / 1000.0) 
+                          );
+  this->last_ticks_l = ticks_l;
+  this->timestamp_l = millis();
   
-  if((power > 0 && power < 64)
-      ||
-     (power > 127 && power < 192))
+  
+  byte power_l = this->motors->get_power('l');
+  if (this->desired_speed_l == 0 && abs(this->motors->power_l - POWER_STOP_L) < 3)
   {
-    retval = -1;
+    power_l = POWER_STOP_L;
   }
-  else if((power > 64 && power < 128)
-      ||
-     (power > 192 && power < 256))
+  else
   {
-    retval = 1;  
+    if(this->desired_speed_l > current_speed_l)
+    {
+      power_l = power_l < 255 ? power_l++ : power_l;
+      //TODO loguj pokud jedes na max, ale stejne je to malo (druhy case)
+    }
+    if(this->desired_speed_l < current_speed_l)
+    {
+      power_l = power_l > 128 ? power_l-- : power_l;
+      //todo log, ze pomaleji to uz nepujde v pripade druheho pripadu
+    }
   }
-  else // power == 64 || 192
-  {
-    retval = 0;
-  }
-    
-  return retval;
-}
+
+  this->motors->set_power(power_l, power_r);
+}       
+
+
 
 void Motors::update()
 {
@@ -211,6 +221,98 @@ void Motors::update()
       this->set_power('l');   
 }
 
+byte Motors::get_power(char motor)
+{
+  byte ret = 0;
+  switch(motor)
+  {
+    case 'r':
+      ret = this->power_r;
+      break;
+    case 'l':
+      ret = this->power_l;
+      break;
+    default:
+    {}
+  }
+  return ret;
+}
+
+Motors::Motors()
+{
+  pinMode(LEFT_A, INPUT);
+  pinMode(LEFT_B, INPUT);
+  pinMode(RIGHT_A, INPUT);
+  pinMode(RIGHT_B, INPUT);
+  
+//  this->vel_l = 0;
+//  this->vel_r = 0;
+  this->power_r = POWER_STOP_R;
+  this->power_l = POWER_STOP_L;
+  this->start_time_r = 0;
+  this->start_time_l = 0; 
+  Serial1.begin(MOTOR_BAUDRATE);
+  
+  this->stop();
+  attach_interrupts();
+  //this->move_in_progress = false;
+  //this->steps_to_go = -1; 
+  
+}
+
+bool Motors::moving()
+{
+  bool ret;
+
+  if (power_l == POWER_STOP_L || this->power_r == POWER_STOP_R)
+  {
+    ret = false;
+  }
+  else
+  {
+    ret = true;
+  }
+
+  return ret;
+
+}
+
+void Motors::set_power(byte l, byte r)
+{
+  this->power_l = l;
+  this->power_r = r;
+
+  Serial1.write(this->power_r);
+  Serial1.write(this->power_l);
+   
+}
+
+int Motors::get_dir_coef(byte power)
+{
+  int retval = 0;
+  
+  if((power > 0 && power < 64)
+      ||
+     (power > 127 && power < 192))
+  {
+    retval = -1;
+  }
+  else if((power > 64 && power < 128)
+      ||
+     (power > 192 && power < 256))
+  {
+    retval = 1;  
+  }
+  else // power == 64 || 192
+  {
+    retval = 0;
+  }
+    
+  return retval;
+}
+
+
+
 void Motors::stop()
 {
   Serial1.write(STOP_BYTE);
@@ -246,6 +348,4 @@ void detach_interrupts()
 {
  detachInterrupt(digitalPinToInterrupt(LEFT_A));
  detachInterrupt(digitalPinToInterrupt(RIGHT_A));
- steps_right = 0;
- steps_left = 0;
 }

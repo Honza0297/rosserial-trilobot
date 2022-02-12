@@ -65,7 +65,7 @@ class Motors
 {
     public:
         Motors();
-        void set_power(char motor);
+        void set_power(byte l, byte r);
         void stop();  
         void update();
         int get_dir_coef(byte power);
@@ -76,20 +76,27 @@ class Motors
         unsigned long start_time_r;
         unsigned long start_time_l; 
         bool moving();
+        byte get_power(char motor);
 };
 
 class Motor_driver
 {
     private:
-        int timestamp_l;
-        int timestamp_r;
         float desired_speed_l;
+        int timestamp_l;
+        unsigned long last_ticks_l;
+
         float desired_speed_r;
+        int timestamp_r;
+        unsigned long last_ticks_r;
+
         Motors *motors;
+        long last_update;
+        int timeout;
         //void require_state(State state);
 
     public:
-        Motor_driver();
+        Motor_driver(int timeout = 50);
         void update();
         void stop();
         void emergency_stop();
