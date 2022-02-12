@@ -78,15 +78,14 @@ void Motor_driver::set_desired_speed(float l, float r)
   }
 
 
-
- if (motors->vel_r || motors->vel_l)//(!time_set && (motors->vel_r || motors->vel_l) )
+ /*if (motors->vel_r || motors->vel_l)//(!time_set && (motors->vel_r || motors->vel_l) )
   {
     this->timestamp_l = millis();
     this->timestamp_r = millis();
     ticks_r = 0; //WTF
     ticks_l = 0; //WTF 
    // time_set = true;
-  }
+  }*/
 }
 
 
@@ -97,15 +96,12 @@ void Motor_driver::update()
   //if no update for too long, stop
   if((millis() - this->last_update) >= this->timeout)
   {
-    motors->vel_l = 0;
-    motors->vel_r = 0;
-    return;
+    this->desired_speed_r = 0;
+    this->desired_speed_l = 0;
   }    
 
-  float current_speed_r = this->motors->get_dir_coef(this->motors->power_r) * 
-                          (
-                            (double)(((ticks_r - this->last_ticks_r) * 0.279)/768.0) / ((double)(millis()-this->timestamp_r) / 1000.0) 
-                          );
+  float current_speed_r = this->motors->get_dir_coef(this->motors->power_r) * ((double)(((ticks_r) * 0.279)/768.0) / ((double)(millis()-this->timestamp_r) / 1000.0));
+  ticks_r = 0;
   this->last_ticks_r = ticks_r;
   this->timestamp_r = millis();
   
@@ -119,12 +115,12 @@ void Motor_driver::update()
   {
     if(this->desired_speed_r > current_speed_r)
     {
-      power_r = power_r < 127 ? power_r++ : power_r;
+      power_r = power_r < 127 ? power_r+1 : power_r;
       //TODO loguj pokud jedes na max, ale stejne je to malo (druhy case)
     }
     if(this->desired_speed_r < current_speed_r)
     {
-      power_r = power_r > 1 ? power_r-- : power_r;
+      power_r = power_r > 1 ? power_r-1 : power_r;
       //todo log, ze pomaleji to uz nepujde v pripade druheho pripadu
     }
   }
@@ -146,12 +142,12 @@ void Motor_driver::update()
   {
     if(this->desired_speed_l > current_speed_l)
     {
-      power_l = power_l < 255 ? power_l++ : power_l;
+      power_l = power_l < 255 ? power_l+1 : power_l;
       //TODO loguj pokud jedes na max, ale stejne je to malo (druhy case)
     }
     if(this->desired_speed_l < current_speed_l)
     {
-      power_l = power_l > 128 ? power_l-- : power_l;
+      power_l = power_l > 128 ? power_l-1 : power_l;
       //todo log, ze pomaleji to uz nepujde v pripade druheho pripadu
     }
   }
@@ -217,8 +213,8 @@ void Motors::update()
       }
 
     }
-      this->set_power('r');
-      this->set_power('l');   
+     // this->set_power('r');
+      //this->set_power('l');   
 }
 
 byte Motors::get_power(char motor)

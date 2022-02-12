@@ -83,11 +83,11 @@ class Motor_driver
 {
     private:
         float desired_speed_l;
-        int timestamp_l;
+        unsigned long  timestamp_l;
         unsigned long last_ticks_l;
 
         float desired_speed_r;
-        int timestamp_r;
+        unsigned long  timestamp_r;
         unsigned long last_ticks_r;
 
         Motors *motors;
@@ -103,5 +103,5 @@ class Motor_driver
         void set_desired_speed(float l, float r);
         //void get_desired_speed();
         //void get_real_speed();
-}
+};
  #endif

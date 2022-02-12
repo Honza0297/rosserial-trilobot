@@ -113,7 +113,7 @@ void vel_callback(const geometry_msgs::Twist &msg)
 
 
 void setup() {
-  md = new Motor_driver(timeout = 3*CYCLE_DURATION);
+  md = new Motor_driver(3*CYCLE_DURATION);
   sonars = new Sonars();
 	nh.initNode();
  
