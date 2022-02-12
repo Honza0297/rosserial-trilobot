@@ -17,7 +17,6 @@
 /**
  * Promenne nutne pro spravne fungovani preruseni.
  * */
-
 volatile unsigned long ticks_r = 0;
 volatile unsigned long ticks_l = 0; 
 
@@ -38,6 +37,41 @@ void motor_left_interrupt_handler();
 void attach_interrupts();
 void detach_interrupts();
 
+Motor_driver::Motor_driver()
+{
+  this->motors = new Motors();
+  this->set_desired_speed(0,0);
+  this->timestamp_r = 0;
+  this->timestamp_l = 0;
+
+}
+
+void Motor_driver::emergency_stop()
+{
+  this->motors->stop();
+  this->stop();
+}
+
+void Motor_driver::stop()
+{
+  this->set_desired_speed(0,0);
+}
+
+void Motor_driver::set_desired_speed(float l, float r)
+{
+  this->desired_speed_l = l;
+  this->desired_speed_r = r;
+}
+
+
+void Motor_driver::update()
+{
+
+}       
+
+
+
+
 Motors::Motors()
 {
   pinMode(LEFT_A, INPUT);
@@ -47,8 +81,8 @@ Motors::Motors()
   
   this->vel_l = 0;
   this->vel_r = 0;
-  this->power_r = 64;
-  this->power_l = 192;
+  this->power_r = POWER_STOP_R;
+  this->power_l = POWER_STOP_L;
   this->start_time_r = 0;
   this->start_time_l = 0; 
   Serial1.begin(MOTOR_BAUDRATE);
@@ -59,6 +93,24 @@ Motors::Motors()
   //this->steps_to_go = -1; 
   
 }
+
+bool Motors::moving()
+{
+  bool ret;
+
+  if (power_l == POWER_STOP_L || this->power_r == POWER_STOP_R)
+  {
+    ret = false;
+  }
+  else
+  {
+    ret = true;
+  }
+
+  return ret;
+
+}
+
 void Motors::set_power(char motor)
 {
   switch (motor)
@@ -155,10 +207,8 @@ void Motors::update()
       }
 
     }
-    //TODO: pokud v_l/v_r jsou nulové a powers v intervalu netoceni, nastavit je na zastaveni, jinak to přepaluje motory. 
       this->set_power('r');
-      this->set_power('l'); //TODO
-  
+      this->set_power('l');   
 }
 
 void Motors::stop()

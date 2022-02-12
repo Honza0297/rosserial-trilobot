@@ -57,9 +57,8 @@ ros::Publisher batt_pub(topic_battery_response, &battery_msg);
 ros::Subscriber<std_msgs::Empty> batt_sub(topic_battery_request, &battery_callback);
 
 /* Control flags */
-bool time_set = false;
+//bool time_set = false;
 
-enum State {move = 1, stop = 0}; 
 State motor_state = stop;
 int cmd_vel_timestamp = 0;
 
@@ -120,13 +119,13 @@ void vel_callback(const geometry_msgs::Twist &msg)
     motors->vel_r = 0;
   }
   
-  if (!time_set && (motors->vel_r || motors->vel_l) )
+  if (motors->vel_r || motors->vel_l)//(!time_set && (motors->vel_r || motors->vel_l) )
   {
     motors->start_time_r = millis();
     motors->start_time_l = millis();
     ticks_r = 0;
     ticks_l = 0;
-    time_set = true;
+   // time_set = true;
   }
   
   return;
@@ -173,6 +172,10 @@ void loop()
       motors->vel_l = 0;
       motors->vel_r = 0;
     }    
+    if(!motors->moving())
+    {
+      motor_state = stop;
+    }
     //TODO jak prehazovat states??
   }
 

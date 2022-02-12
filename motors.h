@@ -43,6 +43,10 @@
 /* minimalni rychlost, m/s*/
 #define MIN_VELOCITY 0.02
 
+#define POWER_STOP_L 192
+#define POWER_STOP_R 64
+
+enum State {move = 1, stop = 0}; 
 
 
 /**
@@ -71,5 +75,26 @@ class Motors
         byte power_l;
         unsigned long start_time_r;
         unsigned long start_time_l; 
+        bool moving();
 };
+
+class Motor_driver
+{
+    private:
+        int timestamp_l;
+        int timestamp_r;
+        float desired_speed_l;
+        float desired_speed_r;
+        Motors *motors;
+        //void require_state(State state);
+
+    public:
+        Motor_driver();
+        void update();
+        void stop();
+        void emergency_stop();
+        void set_desired_speed(float l, float r);
+        //void get_desired_speed();
+        //void get_real_speed();
+}
  #endif
