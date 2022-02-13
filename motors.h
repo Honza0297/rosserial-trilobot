@@ -81,16 +81,21 @@ class Motors
         bool moving();
         byte get_power(char motor);
 };
-class Dummy
+
+template<typename MT> 
+class Pub_wrapper
 {
   public: 
-    trilobot::Odometry odometry_msg;
+    MT msg;
+    char* topic;
     ros::Publisher pub;
-    Dummy()
-    : pub(topic_trilobot_odometry, &odometry_msg)
-    {};
+    Pub_wrapper(char * top)
+    : topic(top), pub(topic, &msg)
+    {
+    };
   
 };
+
 class Motor_driver
 {
     private:
@@ -103,11 +108,12 @@ class Motor_driver
         float desired_speed_r;
         unsigned long  timestamp_r;
         unsigned long last_ticks_r;
-
-        
+        trilobot::Odometry msg;
+        ros::Publisher pub;
         ros::Subscriber<geometry_msgs::Twist, Motor_driver> vel_sub;
         Motors *motors;
-        Dummy dum;
+        //Pub_wrapper<trilobot::Odometry> pub;//(trilobot::Odometry);//(topic_trilobot_odometry);
+        
         long last_update;
         int timeout;
 
@@ -116,7 +122,7 @@ class Motor_driver
 
     public:
         Motor_driver(int timeout,ros::NodeHandle *nh)
-        : vel_sub(topic_cmd_vel, &Motor_driver::vel_callback, this)
+        : pub(topic_trilobot_odometry, &msg), vel_sub(topic_cmd_vel, &Motor_driver::vel_callback, this)
         {
           this->nh = nh;
           this->timeout = timeout;
@@ -126,7 +132,7 @@ class Motor_driver
           this->timestamp_l = 0;
           //this->odometry_pub(topic_trilobot_odometry, &odometry_msg);
           this->nh->subscribe(this->vel_sub);
-          this->nh->advertise(this->dum.pub);
+          this->nh->advertise(this->pub);
   
         };
         void update();

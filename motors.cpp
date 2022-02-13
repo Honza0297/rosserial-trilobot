@@ -102,9 +102,9 @@ void Motor_driver::update()
 {
  /* if (this->desired_speed_l == 0 && this->desired_speed_r == 0){}*/
 
-  this->dum.odometry_msg.right = ticks_r;
-  this->dum.odometry_msg.left= ticks_l;
-  this->dum.pub.publish(&this->dum.odometry_msg);
+  this->msg.right = ticks_r;
+  this->msg.left= ticks_l;
+  this->pub.publish(&this->msg);
   
   //if no update for too long, stop
   if((millis() - this->last_update) >= this->timeout)
