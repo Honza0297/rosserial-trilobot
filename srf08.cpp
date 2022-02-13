@@ -12,6 +12,8 @@
 #include <Arduino.h>
 #include <Wire.h>
 #include "srf08.h"
+#include <std_msgs/Empty.h>
+
 
 
 
@@ -27,7 +29,7 @@ void Sonar_driver::update()
 
 void Sonar_driver::get_and_send_data()
 {
-  sonar_data data = this->sonars->get_distances();
+  sonar_data data = this->sonar->get_distances();
 
   this->msg.front = data.front;
   this->msg.front_right = data.front_right;
@@ -36,12 +38,12 @@ void Sonar_driver::get_and_send_data()
   this->msg.back_left = data.back_left;
   this->msg.back = data.back;
 
-  this->sonar_pub.publish(&this->msg);
+  this->pub.publish(&this->msg);
 }
 
-Sonar_driver::callback(const std_msgs::Empty &msg)
+void Sonar_driver::callback(const std_msgs::Empty &msg)
 {
-  this->sonars->set_measurement();
+  this->sonar->set_measurement();
   this->measuring = true;
   this->measure_start = millis();
 

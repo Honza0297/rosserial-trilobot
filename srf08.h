@@ -14,7 +14,9 @@
  #define _SRF08_H       1
 
 #include "topics.h"
+#include <ros.h>
 #include <trilobot/Sonar_data.h>
+#include <std_msgs/Empty.h>
 
 /*
 * Vychozi I2C adresy
@@ -66,28 +68,7 @@ typedef struct
   uint16_t back;
 } sonar_data;
 
-class Sonar_driver
-{
-  private:
-    Sonar sonar;
-    unsigned long measure_start;
-    bool measuring;
-    Pub_wrapper pub;
-    trilobot::Sonar_data msg;
-    void get_and_send_data();
-    void callback(const std_msgs::Empty &msg);
 
-
-  public:
-     Sonar_driver(ros::NodeHandle *nh)
-     : pub(topic_sonar_resp, &msg_), sub(topic_sonar_request, &Sonar_driver::callback, this)
-     {
-       this->sonar = new Sonar();
-       this->measure_start = 0;
-       this->measuring = false;
-     };
-
-};
 
 /**
  * @brief Trida pro ovladani ultrazvukoveho sonaru SRF-08
@@ -109,5 +90,33 @@ class Sonar
         */
         void set_measurement(byte unit = CM, uint8_t address = SRF08_ADDRESS_BROADCAST);
 };
+class Sonar_driver
+{
+  private:
+    ros::NodeHandle *nh;
+    Sonar* sonar;
+    unsigned long measure_start;
+    bool measuring;
+    ros::Publisher pub;
+    ros::Subscriber<std_msgs::Empty, Sonar_driver> sub;
+    trilobot::Sonar_data msg;
+    void get_and_send_data();
+    void callback(const std_msgs::Empty &msg);
 
+
+  public:
+     Sonar_driver(ros::NodeHandle *nh)
+     : pub(topic_sonar_response, &msg), sub(topic_sonar_request, &Sonar_driver::callback, this)
+     {
+       this->nh = nh;
+       this->sonar = new Sonar();
+       this->measure_start = 0;
+       this->measuring = false;
+
+       this->nh->subscribe(this->sub);
+       this->nh->advertise(this->pub);
+     };
+     void update();
+
+};
 #endif

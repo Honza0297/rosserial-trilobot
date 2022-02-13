@@ -11,8 +11,8 @@
 #include <ros.h>  
 
 /* Generic messages */
-#include <std_msgs/Empty.h>
 #include <std_msgs/Float32.h>
+#include <std_msgs/Empty.h>
 
 /* Trilobot specific messages - mostly structures of nums */
 //#include <trilobot/Odometry.h>
@@ -46,8 +46,8 @@ Sonar_driver *sd;
 /* Function declarations for easier overview */ 
 //ros::Publisher odometry_pub(topic_trilobot_odometry, &odometry_msg);
 
-ros::Subscriber<std_msgs::Empty> sonar_sub(topic_sonars_request, &sonars_callback);
-ros::Publisher sonar_pub(topic_sonars_response, &sonar_msg);
+//ros::Subscriber<std_msgs::Empty> sonar_sub(topic_sonars_request, &sonars_callback);
+//ros::Publisher sonar_pub(topic_sonars_response, &sonar_msg);
 
 ros::Publisher batt_pub(topic_battery_response, &battery_msg);
 ros::Subscriber<std_msgs::Empty> batt_sub(topic_battery_request, &battery_callback);
