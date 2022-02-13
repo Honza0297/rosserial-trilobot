@@ -16,7 +16,6 @@
 
 /* Trilobot specific messages - mostly structures of nums */
 //#include <trilobot/Odometry.h>
-#include <trilobot/Battery_state.h>
 
 /* Trilobot includes */ 
 #include "motors.h"
@@ -30,7 +29,6 @@
 
 /* Messages */
 //trilobot::Sonar_data sonar_msg;
-trilobot::Battery_state battery_msg;
 //trilobot::Odometry odometry_msg;
 
 /* Node handle - "that thingy that creates roserial nodes" */
@@ -63,20 +61,7 @@ extern volatile unsigned long ticks_l;
 
 
 
-void battery_callback(const std_msgs::Empty &msg)
-{
-  float batt0 = analogRead(A0)* 5.0/1023.0 * 147.0/100.0;
-  float batt1 = analogRead(A1) * 5.0/1023.0 * 200.0/100.0 - batt0;
-  float batt2 = analogRead(A2) * 5.0/1023.0 * 320.0/100.0 - batt0 - batt1;
-  float batt3 = analogRead(A3) * 5.0/1023.0 * 400.0/100.0 - batt0 - batt1 - batt2;
-  
-  battery_msg.cell1 = batt0;
-  battery_msg.cell2 = batt1;
-  battery_msg.cell3 = batt2;
-  battery_msg.cell4 = batt3;
-  
-  batt_pub.publish(&battery_msg);
-}
+
 
 
 
@@ -86,6 +71,7 @@ void setup() {
 
   md = new Motor_driver(3*CYCLE_DURATION, &nh);
   sd = new Sonar_driver(&nh);
+  bd = new Battery_driver(&nh);
   //sonars = new Sonar();
 	
  
