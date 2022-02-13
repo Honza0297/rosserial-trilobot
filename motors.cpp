@@ -102,6 +102,10 @@ void Motor_driver::update()
 {
  /* if (this->desired_speed_l == 0 && this->desired_speed_r == 0){}*/
 
+  this->dum.odometry_msg.right = ticks_r;
+  this->dum.odometry_msg.left= ticks_l;
+  this->dum.pub.publish(&this->dum.odometry_msg);
+  
   //if no update for too long, stop
   if((millis() - this->last_update) >= this->timeout)
   {
@@ -109,8 +113,8 @@ void Motor_driver::update()
     this->desired_speed_l = 0;
   }    
 
-  float current_speed_r = this->motors->get_dir_coef(this->motors->power_r) * ((double)(((ticks_r) * 0.279)/768.0) / ((double)(millis()-this->timestamp_r) / 1000.0));
-  ticks_r = 0;
+  float current_speed_r = this->motors->get_dir_coef(this->motors->power_r) * ((double)(((ticks_r - this->last_ticks_r) * 0.279)/768.0) / ((double)(millis()-this->timestamp_r) / 1000.0));
+  //ticks_r = 0;
   this->last_ticks_r = ticks_r;
   this->timestamp_r = millis();
   

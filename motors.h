@@ -14,6 +14,7 @@
 #include <ros.h>
 #include <geometry_msgs/Twist.h>
 #include "topics.h"
+#include <trilobot/Odometry.h>
 
 
 /* Pocet kroku enkoderu pri vyuziti obou kanalu */
@@ -80,7 +81,16 @@ class Motors
         bool moving();
         byte get_power(char motor);
 };
-
+class Dummy
+{
+  public: 
+    trilobot::Odometry odometry_msg;
+    ros::Publisher pub;
+    Dummy()
+    : pub(topic_trilobot_odometry, &odometry_msg)
+    {};
+  
+};
 class Motor_driver
 {
     private:
@@ -96,8 +106,8 @@ class Motor_driver
 
         
         ros::Subscriber<geometry_msgs::Twist, Motor_driver> vel_sub;
-        
         Motors *motors;
+        Dummy dum;
         long last_update;
         int timeout;
 
@@ -114,9 +124,9 @@ class Motor_driver
           this->set_desired_speed(0,0);
           this->timestamp_r = 0;
           this->timestamp_l = 0;
-          //this->vel_sub(topic_cmd_vel, &Motor_driver::vel_callback, &this);
-        
-          this->nh->subscribe(vel_sub);
+          //this->odometry_pub(topic_trilobot_odometry, &odometry_msg);
+          this->nh->subscribe(this->vel_sub);
+          this->nh->advertise(this->dum.pub);
   
         };
         void update();

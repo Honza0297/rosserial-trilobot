@@ -102,7 +102,7 @@ void setup() {
 	
  
 //  nh.subscribe(vel_sub);
-  nh.advertise(odometry_pub);
+  //nh.advertise(odometry_pub);
 
   nh.subscribe(sonar_sub);
   nh.advertise(sonar_pub);
@@ -126,9 +126,9 @@ void loop()
   
   // motor part - dont change md update and odometry sending!
 
-  odometry_msg.right = ticks_r;
+  /*odometry_msg.right = ticks_r;
   odometry_msg.left = ticks_l;
-  odometry_pub.publish(&odometry_msg);
+  odometry_pub.publish(&odometry_msg);*/
 
   md->update();
   
