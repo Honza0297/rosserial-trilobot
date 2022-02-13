@@ -3,6 +3,7 @@
 /*************************************************/
 
 #define DEBUG_ENABLED 1
+#define EMERGENCY_BRAKE 1
 
 /* Generic includes */
 /* nothing*/
@@ -12,7 +13,6 @@
 
 /* Generic messages */
 #include <std_msgs/Empty.h>
-#include <geometry_msgs/Twist.h>
 #include <std_msgs/Float32.h>
 
 /* Trilobot specific messages - mostly structures of nums */
@@ -24,6 +24,8 @@
 #include "motors.h"
 #include "srf08.h"
 #include "topics.h"
+
+#include "ros_master.h"
 
 
 
@@ -40,13 +42,13 @@ trilobot::Odometry odometry_msg;
 
 /* Node handle - "that thingy that creates roserial nodes" */
 ros::NodeHandle nh;
+ROS_master ros_master = new ROS_master(*nh);
 
 /* HW handles */ 
 Motor_driver *md;
 Sonars *sonars;
 
 /* Function declarations for easier overview */ 
-ros::Subscriber<geometry_msgs::Twist> vel_sub(topic_cmd_vel, &vel_callback);
 ros::Publisher odometry_pub(topic_trilobot_odometry, &odometry_msg);
 
 ros::Subscriber<std_msgs::Empty> sonar_sub(topic_sonars_request, &sonars_callback);
@@ -56,12 +58,6 @@ ros::Publisher batt_pub(topic_battery_response, &battery_msg);
 ros::Subscriber<std_msgs::Empty> batt_sub(topic_battery_request, &battery_callback);
 
 /* Control flags */
-//bool time_set = false;
-
-State motor_state = stop;
-int cmd_vel_timestamp = 0;
-
-
 bool measuring = false;
 
 unsigned long cycle_start = 0;
@@ -76,6 +72,11 @@ void sonars_callback(const std_msgs::Empty &msg)
   sonars->set_measurement();
   measuring = true;
   measure_start = millis();
+  if (EMERGENCY_BRAKE)
+  {
+  //TODO  pokud se bude blizit prekazka (distance < neco maleho), brzdi
+  //md->emergency_stop();
+  }
 }
 
 void battery_callback(const std_msgs::Empty &msg)
@@ -93,29 +94,15 @@ void battery_callback(const std_msgs::Empty &msg)
   batt_pub.publish(&battery_msg);
 }
 
-void vel_callback(const geometry_msgs::Twist &msg)
-{ 
-  #if DEBUG_ENABLED
-  char result[8];
-  #endif
-  if (motor_state != move)
-  { 
-    motor_state = move;
-  }
-  //cmd_vel_timestamp = millis();
-  float speed_l = msg.linear.x - (msg.angular.z*INTERWHEEL_DISTANCE)/2;
-  float speed_r = msg.linear.x + (msg.angular.z * INTERWHEEL_DISTANCE)/2;
 
-  md->set_desired_speed(speed_l, speed_r);
-
-  return;
-}
 
 
 void setup() {
-  md = new Motor_driver(3*CYCLE_DURATION);
+  nh.initNode();
+
+  md = new Motor_driver(3*CYCLE_DURATION, &nh);
   sonars = new Sonars();
-	nh.initNode();
+	
  
   nh.subscribe(vel_sub);
   nh.advertise(odometry_pub);
@@ -147,8 +134,6 @@ void loop()
   odometry_pub.publish(&odometry_msg);
 
   md->update();
-  
-    
   
 
   if(measuring)

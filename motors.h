@@ -8,11 +8,10 @@
  /* This file is a part of author´s bachelor thesis*/
  /*                                                */
  /**************************************************/
-
-//TODO:
-// Funkce pro jezdeni v kruhu o danem polomeru/prumeru? 
  #ifndef _MOTORS_H
  #define _MOTORS_H       1
+
+#include <ros.h>
 
 /* Pocet kroku enkoderu pri vyuziti obou kanalu */
 #define STEPS_AB 3072.0
@@ -82,6 +81,8 @@ class Motors
 class Motor_driver
 {
     private:
+        ros::NodeHandle* nh;
+        
         float desired_speed_l;
         unsigned long  timestamp_l;
         unsigned long last_ticks_l;
@@ -90,9 +91,14 @@ class Motor_driver
         unsigned long  timestamp_r;
         unsigned long last_ticks_r;
 
+        
+        ros::Subscriber<geometry_msgs::Twist> vel_sub;
+
         Motors *motors;
         long last_update;
         int timeout;
+
+
         //void require_state(State state);
 
     public:
@@ -101,6 +107,9 @@ class Motor_driver
         void stop();
         void emergency_stop();
         void set_desired_speed(float l, float r);
+
+        void vel_callback(const geometry_msgs::Twist &msg);
+
         //void get_desired_speed();
         //void get_real_speed();
 };

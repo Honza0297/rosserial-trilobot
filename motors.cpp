@@ -12,7 +12,8 @@
 
 #include <Arduino.h>
 #include "motors.h"
-
+#include "topics.h"
+#include <geometry_msgs/Twist.h>
 
 /**
  * Promenne nutne pro spravne fungovani preruseni.
@@ -20,12 +21,6 @@
 volatile unsigned long ticks_r = 0;
 volatile unsigned long ticks_l = 0; 
 
-volatile double time_left = 0;
-volatile double time_right = 0;
-
-float delta = 0.01; 
-float speed_left = 0;
-float speed_right = 0;
 /**
  * Prototypy funkci pro ovladani preruseni
  * */
@@ -34,13 +29,15 @@ void motor_left_interrupt_handler();
 void attach_interrupts();
 void detach_interrupts();
 
-Motor_driver::Motor_driver(int timeout)
+Motor_driver::Motor_driver(int timeout, ros::NodeHandle* nh;)
 {
+  this->nh = nh;
   this->timeout = timeout;
   this->motors = new Motors();
   this->set_desired_speed(0,0);
   this->timestamp_r = 0;
   this->timestamp_l = 0;
+  this->vel_sub = new ros::Subscriber<geometry_msgs::Twist>(topic_cmd_vel, this->vel_callback);
 
 }
 
@@ -53,6 +50,15 @@ void Motor_driver::emergency_stop()
 void Motor_driver::stop()
 {
   this->set_desired_speed(0,0);
+}
+
+void Motor_driver::vel_callback(const geometry_msgs::Twist &msg)
+{ 
+  float speed_l = msg.linear.x - (msg.angular.z*INTERWHEEL_DISTANCE)/2;
+  float speed_r = msg.linear.x + (msg.angular.z * INTERWHEEL_DISTANCE)/2;
+  this->set_desired_speed(speed_l, speed_r);
+
+  return;
 }
 
 void Motor_driver::set_desired_speed(float l, float r)
