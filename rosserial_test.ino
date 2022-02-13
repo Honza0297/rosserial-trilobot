@@ -25,10 +25,6 @@
 #include "srf08.h"
 #include "topics.h"
 
-#include "ros_master.h"
-
-
-
 /* Basic definitions used through the whole file */
 
 #define CYCLE_DURATION 50 //ms
@@ -42,7 +38,7 @@ trilobot::Odometry odometry_msg;
 
 /* Node handle - "that thingy that creates roserial nodes" */
 ros::NodeHandle nh;
-ROS_master ros_master = new ROS_master(*nh);
+//ROS_master ros_master = new ROS_master(*nh);
 
 /* HW handles */ 
 Motor_driver *md;
@@ -101,10 +97,11 @@ void setup() {
   nh.initNode();
 
   md = new Motor_driver(3*CYCLE_DURATION, &nh);
+  
   sonars = new Sonars();
 	
  
-  nh.subscribe(vel_sub);
+//  nh.subscribe(vel_sub);
   nh.advertise(odometry_pub);
 
   nh.subscribe(sonar_sub);

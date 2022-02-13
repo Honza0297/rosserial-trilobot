@@ -12,6 +12,9 @@
  #define _MOTORS_H       1
 
 #include <ros.h>
+#include <geometry_msgs/Twist.h>
+#include "topics.h"
+
 
 /* Pocet kroku enkoderu pri vyuziti obou kanalu */
 #define STEPS_AB 3072.0
@@ -81,7 +84,7 @@ class Motors
 class Motor_driver
 {
     private:
-        ros::NodeHandle* nh;
+        ros::NodeHandle *nh;
         
         float desired_speed_l;
         unsigned long  timestamp_l;
@@ -92,8 +95,8 @@ class Motor_driver
         unsigned long last_ticks_r;
 
         
-        ros::Subscriber<geometry_msgs::Twist> vel_sub;
-
+        ros::Subscriber<geometry_msgs::Twist, Motor_driver> vel_sub;
+        
         Motors *motors;
         long last_update;
         int timeout;
@@ -102,7 +105,20 @@ class Motor_driver
         //void require_state(State state);
 
     public:
-        Motor_driver(int timeout = 50);
+        Motor_driver(int timeout,ros::NodeHandle *nh)
+        : vel_sub(topic_cmd_vel, &Motor_driver::vel_callback, this)
+        {
+          this->nh = nh;
+          this->timeout = timeout;
+          this->motors = new Motors();
+          this->set_desired_speed(0,0);
+          this->timestamp_r = 0;
+          this->timestamp_l = 0;
+          //this->vel_sub(topic_cmd_vel, &Motor_driver::vel_callback, &this);
+        
+          this->nh->subscribe(vel_sub);
+  
+        };
         void update();
         void stop();
         void emergency_stop();

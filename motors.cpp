@@ -29,7 +29,7 @@ void motor_left_interrupt_handler();
 void attach_interrupts();
 void detach_interrupts();
 
-Motor_driver::Motor_driver(int timeout, ros::NodeHandle* nh;)
+/*Motor_driver::Motor_driver(int timeout, ros::NodeHandle &nh)
 {
   this->nh = nh;
   this->timeout = timeout;
@@ -37,9 +37,11 @@ Motor_driver::Motor_driver(int timeout, ros::NodeHandle* nh;)
   this->set_desired_speed(0,0);
   this->timestamp_r = 0;
   this->timestamp_l = 0;
-  this->vel_sub = new ros::Subscriber<geometry_msgs::Twist>(topic_cmd_vel, this->vel_callback);
+  //this->vel_sub(topic_cmd_vel, &Motor_driver::vel_callback, &this);
 
-}
+  this->nh.subscribe(this->vel_sub);
+
+}*/
 
 void Motor_driver::emergency_stop()
 {
@@ -54,6 +56,7 @@ void Motor_driver::stop()
 
 void Motor_driver::vel_callback(const geometry_msgs::Twist &msg)
 { 
+  this->nh->loginfo("ddD");
   float speed_l = msg.linear.x - (msg.angular.z*INTERWHEEL_DISTANCE)/2;
   float speed_r = msg.linear.x + (msg.angular.z * INTERWHEEL_DISTANCE)/2;
   this->set_desired_speed(speed_l, speed_r);
