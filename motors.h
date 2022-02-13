@@ -122,7 +122,8 @@ class Motor_driver
 
     public:
         Motor_driver(int timeout,ros::NodeHandle *nh)
-        : pub(topic_trilobot_odometry, &msg), vel_sub(topic_cmd_vel, &Motor_driver::vel_callback, this)
+        : pub(topic_trilobot_odometry, &msg), 
+          vel_sub(topic_cmd_vel, &Motor_driver::vel_callback, this)
         {
           this->nh = nh;
           this->timeout = timeout;

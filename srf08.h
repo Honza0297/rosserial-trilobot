@@ -13,6 +13,9 @@
  #ifndef _SRF08_H
  #define _SRF08_H       1
 
+#include "topics.h"
+#include <trilobot/Sonar_data.h>
+
 /*
 * Vychozi I2C adresy
 */
@@ -49,6 +52,10 @@ const uint8_t srf08_addresses[6] = {
 #define REG_CMD 0x00
 #define REG_LIGH 0x01
 
+
+#define SRF08_MEASURE_TIME 70
+
+
 typedef struct
 { 
   uint16_t front;
@@ -59,16 +66,39 @@ typedef struct
   uint16_t back;
 } sonar_data;
 
+class Sonar_driver
+{
+  private:
+    Sonar sonar;
+    unsigned long measure_start;
+    bool measuring;
+    Pub_wrapper pub;
+    trilobot::Sonar_data msg;
+    void get_and_send_data();
+    void callback(const std_msgs::Empty &msg);
+
+
+  public:
+     Sonar_driver(ros::NodeHandle *nh)
+     : pub(topic_sonar_resp, &msg_), sub(topic_sonar_request, &Sonar_driver::callback, this)
+     {
+       this->sonar = new Sonar();
+       this->measure_start = 0;
+       this->measuring = false;
+     };
+
+};
+
 /**
- * @brief Trida pro ovladani ultrazvukoveho cidla vzdalenosti SRF-08
+ * @brief Trida pro ovladani ultrazvukoveho sonaru SRF-08
  * */
-class Sonars
+class Sonar
 {
     public:
         /**
          * @brief Konstruktor. 
          * */
-        Sonars();
+        Sonar();
         /**
         * @brief Funkce ziska vzdalenost ze vsech senzoru SRF-08
         * @return Vzdalenost v pozadovane jednotce nebo -1 pri problemu

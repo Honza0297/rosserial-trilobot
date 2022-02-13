@@ -3,7 +3,6 @@
 /*************************************************/
 
 #define DEBUG_ENABLED 1
-#define EMERGENCY_BRAKE 1
 
 /* Generic includes */
 /* nothing*/
@@ -16,8 +15,7 @@
 #include <std_msgs/Float32.h>
 
 /* Trilobot specific messages - mostly structures of nums */
-#include <trilobot/Odometry.h>
-#include <trilobot/Sonar_data.h>
+//#include <trilobot/Odometry.h>
 #include <trilobot/Battery_state.h>
 
 /* Trilobot includes */ 
@@ -28,13 +26,12 @@
 /* Basic definitions used through the whole file */
 
 #define CYCLE_DURATION 50 //ms
-#define SRF08_MEASURE_TIME 70
 
 
 /* Messages */
-trilobot::Sonar_data sonar_msg;
+//trilobot::Sonar_data sonar_msg;
 trilobot::Battery_state battery_msg;
-trilobot::Odometry odometry_msg;
+//trilobot::Odometry odometry_msg;
 
 /* Node handle - "that thingy that creates roserial nodes" */
 ros::NodeHandle nh;
@@ -42,10 +39,12 @@ ros::NodeHandle nh;
 
 /* HW handles */ 
 Motor_driver *md;
-Sonars *sonars;
+Sonar_driver *sd;
+
+//Sonar *sonars;
 
 /* Function declarations for easier overview */ 
-ros::Publisher odometry_pub(topic_trilobot_odometry, &odometry_msg);
+//ros::Publisher odometry_pub(topic_trilobot_odometry, &odometry_msg);
 
 ros::Subscriber<std_msgs::Empty> sonar_sub(topic_sonars_request, &sonars_callback);
 ros::Publisher sonar_pub(topic_sonars_response, &sonar_msg);
@@ -57,23 +56,12 @@ ros::Subscriber<std_msgs::Empty> batt_sub(topic_battery_request, &battery_callba
 bool measuring = false;
 
 unsigned long cycle_start = 0;
-unsigned long measure_start = 0;
 
 /* extern variables for odometry */
 extern volatile unsigned long ticks_r;
 extern volatile unsigned long ticks_l;
 
-void sonars_callback(const std_msgs::Empty &msg)
-{
-  sonars->set_measurement();
-  measuring = true;
-  measure_start = millis();
-  if (EMERGENCY_BRAKE)
-  {
-  //TODO  pokud se bude blizit prekazka (distance < neco maleho), brzdi
-  //md->emergency_stop();
-  }
-}
+
 
 void battery_callback(const std_msgs::Empty &msg)
 {
@@ -97,15 +85,15 @@ void setup() {
   nh.initNode();
 
   md = new Motor_driver(3*CYCLE_DURATION, &nh);
-  
-  sonars = new Sonars();
+  sd = new Sonar_driver(&nh);
+  //sonars = new Sonar();
 	
  
 //  nh.subscribe(vel_sub);
   //nh.advertise(odometry_pub);
 
-  nh.subscribe(sonar_sub);
-  nh.advertise(sonar_pub);
+ // nh.subscribe(sonar_sub);
+ // nh.advertise(sonar_pub);
 
   nh.subscribe(batt_sub);
   nh.advertise(batt_pub);
@@ -131,24 +119,9 @@ void loop()
   odometry_pub.publish(&odometry_msg);*/
 
   md->update();
+  sd->update();
   
 
-  if(measuring)
-  {
-    if(millis() - measure_start >= SRF08_MEASURE_TIME) // 70 == cas od odeslani prikazu po zmereni
-        {
-          measuring= false;
-          measure_start = millis();
-          sonar_data data = sonars->get_distances();
-          sonar_msg.front = data.front;
-          sonar_msg.front_right = data.front_right;
-          sonar_msg.front_left = data.front_left;
-          sonar_msg.back_right= data.back_right;
-          sonar_msg.back_left = data.back_left;
-          sonar_msg.back = data.back;
-          sonar_pub.publish(&sonar_msg);
-        }
-  }
   nh.spinOnce();
 
 

@@ -13,12 +13,47 @@
 #include <Wire.h>
 #include "srf08.h"
 
-Sonars::Sonars()
+
+
+void Sonar_driver::update()
+{
+  if(measuring && millis() - this->measure_start >= SRF08_MEASURE_TIME)
+  {
+    this->measuring= false;
+    measure_start = 0;
+    this->get_and_send_data(); 
+  }
+}
+
+void Sonar_driver::get_and_send_data()
+{
+  sonar_data data = this->sonars->get_distances();
+
+  this->msg.front = data.front;
+  this->msg.front_right = data.front_right;
+  this->msg.front_left = data.front_left;
+  this->msg.back_right= data.back_right;
+  this->msg.back_left = data.back_left;
+  this->msg.back = data.back;
+
+  this->sonar_pub.publish(&this->msg);
+}
+
+Sonar_driver::callback(const std_msgs::Empty &msg)
+{
+  this->sonars->set_measurement();
+  this->measuring = true;
+  this->measure_start = millis();
+
+}
+
+Sonar::Sonar()
 {
   Wire.begin();
 }
 
-void Sonars::set_measurement(byte unit, uint8_t address)
+
+void Sonar::set_measurement(byte unit, uint8_t address)
 {
   Wire.beginTransmission(address);
   Wire.write(REG_CMD);
@@ -28,7 +63,7 @@ void Sonars::set_measurement(byte unit, uint8_t address)
   //delay(100);
 }
 
-sonar_data Sonars::get_distances(byte unit)
+sonar_data Sonar::get_distances(byte unit)
 {
   uint16_t data[6];
   //this->set_measurement(unit, SRF08_ADDRESS_BROADCAST);
