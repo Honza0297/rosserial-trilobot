@@ -21,7 +21,7 @@
 #include "motors.h"
 #include "srf08.h"
 #include "topics.h"
-
+#include "battery.h"
 /* Basic definitions used through the whole file */
 
 #define CYCLE_DURATION 50 //ms
@@ -38,7 +38,7 @@ ros::NodeHandle nh;
 /* HW handles */ 
 Motor_driver *md;
 Sonar_driver *sd;
-
+Battery_driver *bd;
 //Sonar *sonars;
 
 /* Function declarations for easier overview */ 
@@ -47,8 +47,8 @@ Sonar_driver *sd;
 //ros::Subscriber<std_msgs::Empty> sonar_sub(topic_sonars_request, &sonars_callback);
 //ros::Publisher sonar_pub(topic_sonars_response, &sonar_msg);
 
-ros::Publisher batt_pub(topic_battery_response, &battery_msg);
-ros::Subscriber<std_msgs::Empty> batt_sub(topic_battery_request, &battery_callback);
+//ros::Publisher batt_pub(topic_battery_response, &battery_msg);
+//ros::Subscriber<std_msgs::Empty> batt_sub(topic_battery_request, &battery_callback);
 
 /* Control flags */
 bool measuring = false;
@@ -81,8 +81,8 @@ void setup() {
  // nh.subscribe(sonar_sub);
  // nh.advertise(sonar_pub);
 
-  nh.subscribe(batt_sub);
-  nh.advertise(batt_pub);
+//  nh.subscribe(batt_sub);
+ // nh.advertise(batt_pub);
 
 
   pinMode(A0, INPUT);
