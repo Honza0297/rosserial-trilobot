@@ -66,7 +66,7 @@ void setup() {
 
   nh.initNode();
 
-  md = new Motor_driver(timeout=3*CYCLE_DURATION, nh=&nh);
+  md = new Motor_driver(3*CYCLE_DURATION, &nh);
   sd = new Sonar_driver(&nh);
   bd = new Battery_driver(&nh);
  
