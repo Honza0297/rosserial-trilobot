@@ -27,9 +27,8 @@ class Battery_driver
     ros::Publisher pub;
     ros::Subscriber<std_msgs::Empty, Battery_driver> sub;
     trilobot::Battery_state msg;
-    
-    void callback(const std_msgs::Empty &msg);
 
+    void callback(const std_msgs::Empty &msg);
 
   public:
      Battery_driver(ros::NodeHandle *nh)
@@ -38,7 +37,12 @@ class Battery_driver
        this->nh = nh;
        this->nh->subscribe(this->sub);
        this->nh->advertise(this->pub);
+       this->msg->cell0 = 0;
+       this->msg->cell1 = 0;
+       this->msg->cell2 = 0;
+       this->msg->cell3 = 0;
      };
+     void update();
 
 };
 #endif

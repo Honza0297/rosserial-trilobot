@@ -24,7 +24,11 @@
 #include "battery.h"
 /* Basic definitions used through the whole file */
 
-#define CYCLE_DURATION 50 //ms
+/* How long should one cycle take (at least)*/
+#define CYCLE_DURATION 50
+
+/* Informational value to roughly time the cycle duration (details in loop()) */
+unsigned long cycle_start = 0;
 
 
 /* Messages */
@@ -53,38 +57,20 @@ Battery_driver *bd;
 /* Control flags */
 bool measuring = false;
 
-unsigned long cycle_start = 0;
-
-/* extern variables for odometry */
+/* Extern variables for odometry */
 extern volatile unsigned long ticks_r;
 extern volatile unsigned long ticks_l;
 
 
-
-
-
-
-
-
 void setup() {
+
   nh.initNode();
 
-  md = new Motor_driver(3*CYCLE_DURATION, &nh);
+  md = new Motor_driver(timeout=3*CYCLE_DURATION, nh=&nh);
   sd = new Sonar_driver(&nh);
   bd = new Battery_driver(&nh);
-  //sonars = new Sonar();
-	
  
-//  nh.subscribe(vel_sub);
-  //nh.advertise(odometry_pub);
-
- // nh.subscribe(sonar_sub);
- // nh.advertise(sonar_pub);
-
-//  nh.subscribe(batt_sub);
- // nh.advertise(batt_pub);
-
-
+  /* A0-A3 are used to monitor voltage levels for each cell of the battery */
   pinMode(A0, INPUT);
   pinMode(A1, INPUT);
   pinMode(A2, INPUT);
@@ -97,20 +83,19 @@ void setup() {
 void loop() 
 {
   cycle_start = millis();
-  
-  // motor part - dont change md update and odometry sending!
 
-  /*odometry_msg.right = ticks_r;
-  odometry_msg.left = ticks_l;
-  odometry_pub.publish(&odometry_msg);*/
-
+  /* Motor driver udpate */
   md->update();
+
+  /* Sonar driver udpate */
   sd->update();
-  
+
+  /* Battery driver update */
+  bd->update();
 
   nh.spinOnce();
 
-
-  //NOTE: epxerimental value, can be something in range 1 to CYCLE_DURATION...  
-  delay((millis()-cycle_start) < CYCLE_DURATION ? CYCLE_DURATION - (millis()-cycle_start) : 1);
+ /* Rough timing of one cycle.
+    It guarantees minimal cycle duration (set by CYCLE_DURATION), but not the maximal duration! */
+ delay((millis()-cycle_start) < CYCLE_DURATION ? (CYCLE_DURATION - (millis()-cycle_start)) : 1);
 }
