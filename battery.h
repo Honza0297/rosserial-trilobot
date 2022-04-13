@@ -19,6 +19,7 @@
 #include <std_msgs/Empty.h>
 #include <trilobot/Battery_state.h>
 
+#define BATT_UPDATE_INTERVAL 1000 //ms
 class Battery_driver
 {
   private:
@@ -27,7 +28,7 @@ class Battery_driver
     ros::Publisher pub;
     ros::Subscriber<std_msgs::Empty, Battery_driver> sub;
     trilobot::Battery_state msg;
-
+    unsigned long last_update;
     void callback(const std_msgs::Empty &msg);
 
   public:
@@ -41,6 +42,7 @@ class Battery_driver
        this->msg.cell2 = 0;
        this->msg.cell3 = 0;
        this->msg.cell4 = 0;
+       last_update = 0;
      }
      void update();
 

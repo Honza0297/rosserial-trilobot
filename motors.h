@@ -43,11 +43,15 @@
 
 #define TURN_RADIUS 40
 
-/* minimalni rychlost, m/s*/
+/* minimalni rychlost, m/s a minimalni vkon do motoru, aby se jeste tocil*/
 #define MIN_VELOCITY 0.02
+#define MIN_POWER 3
+
 
 #define POWER_STOP_L 192
 #define POWER_STOP_R 64
+
+
 
 enum State {move = 1, stop = 0}; 
 
@@ -70,7 +74,7 @@ class Motors
         Motors();
         void set_power(byte l, byte r);
         void stop();  
-        void update();
+        //void update();
         int get_dir_coef(byte power);
         float vel_l;
         float vel_r;
@@ -79,21 +83,7 @@ class Motors
         unsigned long start_time_r;
         unsigned long start_time_l; 
         bool moving();
-        byte get_power(char motor);
-};
-
-template<typename MT> 
-class Pub_wrapper
-{
-  public: 
-    MT msg;
-    char* topic;
-    ros::Publisher pub;
-    Pub_wrapper(char * top)
-    : topic(top), pub(topic, &msg)
-    {
-    };
-  
+        byte get_current_power(char motor);
 };
 
 class Motor_driver
@@ -101,24 +91,21 @@ class Motor_driver
     private:
         ros::NodeHandle *nh;
         
-        float desired_speed_l;
+        float goal_speed_l;
         unsigned long  timestamp_l;
         unsigned long last_ticks_l;
 
-        float desired_speed_r;
+        float goal_speed_r;
         unsigned long  timestamp_r;
         unsigned long last_ticks_r;
+
         trilobot::Odometry msg;
         ros::Publisher pub;
         ros::Subscriber<geometry_msgs::Twist, Motor_driver> vel_sub;
         Motors *motors;
-        //Pub_wrapper<trilobot::Odometry> pub;//(trilobot::Odometry);//(topic_trilobot_odometry);
         
         long last_update;
         int timeout;
-
-
-        //void require_state(State state);
 
     public:
         Motor_driver(int timeout,ros::NodeHandle *nh)
@@ -128,10 +115,9 @@ class Motor_driver
           this->nh = nh;
           this->timeout = timeout;
           this->motors = new Motors();
-          this->set_desired_speed(0,0);
+          this->set_goal_speed(0,0);
           this->timestamp_r = 0;
           this->timestamp_l = 0;
-          //this->odometry_pub(topic_trilobot_odometry, &odometry_msg);
           this->nh->subscribe(this->vel_sub);
           this->nh->advertise(this->pub);
   
@@ -139,11 +125,8 @@ class Motor_driver
         void update();
         void stop();
         void emergency_stop();
-        void set_desired_speed(float l, float r);
+        void set_goal_speed(float l, float r);
 
         void vel_callback(const geometry_msgs::Twist &msg);
-
-        //void get_desired_speed();
-        //void get_real_speed();
 };
  #endif

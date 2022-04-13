@@ -17,6 +17,7 @@
 
 /**
  * Promenne nutne pro spravne fungovani preruseni.
+ * NOTE: v celem kodu nejsou nulovany, protoze nez unsigned long pretece, Trilobot ujede cca 1400 km :) 
  * */
 volatile unsigned long ticks_r = 0;
 volatile unsigned long ticks_l = 0; 
@@ -29,19 +30,6 @@ void motor_left_interrupt_handler();
 void attach_interrupts();
 void detach_interrupts();
 
-/*Motor_driver::Motor_driver(int timeout, ros::NodeHandle &nh)
-{
-  this->nh = nh;
-  this->timeout = timeout;
-  this->motors = new Motors();
-  this->set_desired_speed(0,0);
-  this->timestamp_r = 0;
-  this->timestamp_l = 0;
-  //this->vel_sub(topic_cmd_vel, &Motor_driver::vel_callback, &this);
-
-  this->nh.subscribe(this->vel_sub);
-
-}*/
 
 void Motor_driver::emergency_stop()
 {
@@ -51,7 +39,7 @@ void Motor_driver::emergency_stop()
 
 void Motor_driver::stop()
 {
-  this->set_desired_speed(0,0);
+  this->set_goal_speed(0,0);
 }
 
 void Motor_driver::vel_callback(const geometry_msgs::Twist &msg)
@@ -59,178 +47,130 @@ void Motor_driver::vel_callback(const geometry_msgs::Twist &msg)
   this->nh->loginfo("ddD");
   float speed_l = msg.linear.x - (msg.angular.z*INTERWHEEL_DISTANCE)/2;
   float speed_r = msg.linear.x + (msg.angular.z * INTERWHEEL_DISTANCE)/2;
-  this->set_desired_speed(speed_l, speed_r);
+  this->set_goal_speed(speed_l, speed_r);
 
   return;
 }
 
-void Motor_driver::set_desired_speed(float l, float r)
+void Motor_driver::set_goal_speed(float l, float r)
 {
   this->last_update = millis();
 
    if(abs(l) < MIN_VELOCITY)
   {
-    this->desired_speed_l = 0;
+    this->goal_speed_l = 0;
   }
   else
   {
-    this->desired_speed_l = l;
+    this->goal_speed_l = l;
   }
 
   if(abs(r) < MIN_VELOCITY)
   {
-    this->desired_speed_r = 0;
+    this->goal_speed_r = 0;
   }
   else
   {
-    this->desired_speed_r = r;
+    this->goal_speed_r = r;
   }
-
-
- /*if (motors->vel_r || motors->vel_l)//(!time_set && (motors->vel_r || motors->vel_l) )
-  {
-    this->timestamp_l = millis();
-    this->timestamp_r = millis();
-    ticks_r = 0; //WTF
-    ticks_l = 0; //WTF 
-   // time_set = true;
-  }*/
 }
 
 
 void Motor_driver::update()
 {
- /* if (this->desired_speed_l == 0 && this->desired_speed_r == 0){}*/
 
+  /* TODO if speed is zero for both motors, dont publish odometry because of bandwidth*/
   this->msg.right = ticks_r;
   this->msg.left= ticks_l;
   this->pub.publish(&this->msg);
   
-  //if no update for too long, stop
+  //if no update for too long, soft stop
   if((millis() - this->last_update) >= this->timeout)
   {
-    this->desired_speed_r = 0;
-    this->desired_speed_l = 0;
+    this->goal_speed_r = 0;
+    this->goal_speed_l = 0;
   }    
 
-  float current_speed_r = this->motors->get_dir_coef(this->motors->power_r) * ((double)(((ticks_r - this->last_ticks_r) * 0.279)/768.0) / ((double)(millis()-this->timestamp_r) / 1000.0));
-  //ticks_r = 0;
-  this->last_ticks_r = ticks_r;
-  this->timestamp_r = millis();
-  
-  
-  byte power_r = this->motors->get_power('r');
-  if (this->desired_speed_r == 0 && abs(this->motors->power_r - POWER_STOP_R) < 3)
-  {
-    power_r = POWER_STOP_R;
-  }
-  else
-  {
-    if(this->desired_speed_r > current_speed_r)
-    {
-      power_r = power_r < 127 ? power_r+1 : power_r;
-      //TODO loguj pokud jedes na max, ale stejne je to malo (druhy case)
-    }
-    if(this->desired_speed_r < current_speed_r)
-    {
-      power_r = power_r > 1 ? power_r-1 : power_r;
-      //todo log, ze pomaleji to uz nepujde v pripade druheho pripadu
-    }
-  }
-
-  float current_speed_l = this->motors->get_dir_coef(this->motors->power_l) * 
-                          (
-                            (double)(((ticks_l - this->last_ticks_l) * 0.279)/768.0) / ((double)(millis()-this->timestamp_l) / 1000.0) 
-                          );
-  this->last_ticks_l = ticks_l;
-  this->timestamp_l = millis();
-  
-  
-  byte power_l = this->motors->get_power('l');
-  if (this->desired_speed_l == 0 && abs(this->motors->power_l - POWER_STOP_L) < 3)
-  {
-    power_l = POWER_STOP_L;
-  }
-  else
-  {
-    if(this->desired_speed_l > current_speed_l)
-    {
-      power_l = power_l < 255 ? power_l+1 : power_l;
-      //TODO loguj pokud jedes na max, ale stejne je to malo (druhy case)
-    }
-    if(this->desired_speed_l < current_speed_l)
-    {
-      power_l = power_l > 128 ? power_l-1 : power_l;
-      //todo log, ze pomaleji to uz nepujde v pripade druheho pripadu
-    }
-  }
+  byte power_r = compute_new_power('r');
+  byte power_l = compute_new_power('l');
 
   this->motors->set_power(power_l, power_r);
 }       
 
-
-
-void Motors::update()
+byte compute_new_power(char motor, )
 {
-    double v_curr_r = this->get_dir_coef(this->power_r) * ( (double) (( ticks_r * 0.279)/768.0 )/( (double) (millis()-this->start_time_r) / 1000.0) );
-    ticks_r = 0;
-    this->start_time_r= millis();   
-    if (this->vel_r == 0 && abs(this->power_r - 64) < 3)
+  /*
+    TODO:
+    - make function for computing current speed
+    - make magic values constants
+    **/
+  byte power;
+  if(motor == 'r')
+  {
+    float current_speed_r = this->motors->get_dir_coef(this->motors->power_r) * ((double)(((ticks_r - this->last_ticks_r) * 0.279)/768.0) / ((double)(millis()-this->timestamp_r) / 1000.0));
+    this->last_ticks_r = ticks_r;
+    this->timestamp_r = millis();
+    
+    
+    byte power_r; 
+    /* Final stop from very low speed */
+    if (this->goal_speed_r == 0 && abs(this->motors->power_r - POWER_STOP_R) < MIN_POWER)
     {
-      this->power_r = 64;
+      power_r = POWER_STOP_R;
     }
     else
     {
-      if(this->vel_r > v_curr_r)
+      power_r = this->motors->get_current_power('r'); /* copy current power */
+      if(this->goal_speed_r > current_speed_r)
       {
-        if(this->power_r < 127)
-        {
-          this->power_r++;
-        }
-        //TODO else loguj, ze jedes na max, ale stejne malo
+        power_r = power_r < 127 ? power_r+1 : power_r;
+        //TODO loguj pokud jedes na max, ale stejne je to malo (druhy case)
       }
-      if(this->vel_r < v_curr_r)
+      if(this->goal_speed_r < current_speed_r)
       {
-        if(this->power_r > 1)
-        {
-          this->power_r--;
-        }
-        //todo log, ze pomaleji to uz nepujde
+        power_r = power_r > 1 ? power_r-1 : power_r;
+        //todo log, ze pomaleji to uz nepujde v pripade druheho pripadu
       }
     }
-        
-    double v_curr_l = get_dir_coef(this->power_l)*( (double) (( ticks_l * 0.279)/768.0 )/( (double) (millis()-this->start_time_l) / 1000.0) );
-    ticks_l = 0;
-    this->start_time_l = millis();
-    if(this->vel_l == 0 && abs(this->power_l-192) < 3)
-    {
-      this->power_l = 192;    
-    }
-    else
-    {
-      if(this->vel_l > v_curr_l)
-      {
-        if(this->power_l < 255)
-        {
-          this->power_l++;
-        }
-        //TODO else loguj, ze jedes na max, ale stejne malo
-      }
-      if(this->vel_l < v_curr_l)
-      {
-        if(this->power_l > 128)
-        {
-          this->power_l--;
-        }
-        //todo log, ze pomaleji to uz nepujde
-      }
+    power = power_r;
+  }
+  else if (motor == 'l')
+  {
+    float current_speed_l = this->motors->get_dir_coef(this->motors->power_l) * 
+                          (
+                            (double)(((ticks_l - this->last_ticks_l) * 0.279)/768.0) / ((double)(millis()-this->timestamp_l) / 1000.0) 
+                          );
+    this->last_ticks_l = ticks_l;
+    this->timestamp_l = millis();
 
+    byte power_l; 
+    /* Final stop from very low speed */
+    if (this->goal_speed_l == 0 && abs(this->motors->power_l - POWER_STOP_L) < MIN_POWER)
+    {
+      power_l = POWER_STOP_L;
     }
-     // this->set_power('r');
-      //this->set_power('l');   
+    else
+    {
+      power_l = this->motors->get_current_power('l');
+      if(this->goal_speed_l > current_speed_l)
+      {
+        power_l = power_l < 255 ? power_l+1 : power_l;
+        //TODO loguj pokud jedes na max, ale stejne je to malo (druhy case)
+      }
+      if(this->goal_speed_l < current_speed_l)
+      {
+        power_l = power_l > 128 ? power_l-1 : power_l;
+        //todo log, ze pomaleji to uz nepujde v pripade druheho pripadu
+      }
+    }
+    power = power_l;
+  }
+
+  return power;
 }
 
-byte Motors::get_power(char motor)
+
+byte Motors::get_current_power(char motor)
 {
   byte ret = 0;
   switch(motor)
@@ -254,8 +194,6 @@ Motors::Motors()
   pinMode(RIGHT_A, INPUT);
   pinMode(RIGHT_B, INPUT);
   
-//  this->vel_l = 0;
-//  this->vel_r = 0;
   this->power_r = POWER_STOP_R;
   this->power_l = POWER_STOP_L;
   this->start_time_r = 0;
@@ -263,10 +201,7 @@ Motors::Motors()
   Serial1.begin(MOTOR_BAUDRATE);
   
   this->stop();
-  attach_interrupts();
-  //this->move_in_progress = false;
-  //this->steps_to_go = -1; 
-  
+  attach_interrupts();  
 }
 
 bool Motors::moving()
