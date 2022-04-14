@@ -20,7 +20,7 @@ void Battery_driver::callback(const std_msgs::Empty &msg)
 
 void Battery_driver::update()
 {
-  if((millis() - this->last_update)) >= BATT_UPDATE_INTERVAL)
+  if((millis() - this->last_update) >= BATT_UPDATE_INTERVAL)
   {
     this->last_update = millis();
 

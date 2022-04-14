@@ -91,13 +91,13 @@ void Motor_driver::update()
     this->goal_speed_l = 0;
   }    
 
-  byte power_r = compute_new_power('r');
-  byte power_l = compute_new_power('l');
+  byte power_r = this->compute_new_power('r');
+  byte power_l = this->compute_new_power('l');
 
   this->motors->set_power(power_l, power_r);
 }       
 
-byte compute_new_power(char motor, )
+byte Motor_driver::compute_new_power(char motor)
 {
   /*
     TODO:

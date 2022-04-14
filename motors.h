@@ -106,6 +106,8 @@ class Motor_driver
         
         long last_update;
         int timeout;
+        byte compute_new_power(char motor);
+
 
     public:
         Motor_driver(int timeout,ros::NodeHandle *nh)
