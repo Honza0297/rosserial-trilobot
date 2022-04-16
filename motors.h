@@ -12,7 +12,7 @@
  #define _MOTORS_H       1
 
 #include <ros.h>
-#include <geometry_msgs/Twist.h>
+#include <trilobot/Vel.h>
 #include "topics.h"
 #include <trilobot/Odometry.h>
 
@@ -101,7 +101,7 @@ class Motor_driver
 
         trilobot::Odometry msg;
         ros::Publisher pub;
-        ros::Subscriber<geometry_msgs::Twist, Motor_driver> vel_sub;
+        ros::Subscriber<trilobot::Vel, Motor_driver> vel_sub;
         Motors *motors;
         
         long last_update;
@@ -129,6 +129,6 @@ class Motor_driver
         void emergency_stop();
         void set_goal_speed(float l, float r);
 
-        void vel_callback(const geometry_msgs::Twist &msg);
+        void vel_callback(const trilobot::Vel &msg);
 };
  #endif

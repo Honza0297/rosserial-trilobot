@@ -13,7 +13,7 @@
 #include <Arduino.h>
 #include "motors.h"
 #include "topics.h"
-#include <geometry_msgs/Twist.h>
+#include <trilobot/Vel.h>
 
 /**
  * Promenne nutne pro spravne fungovani preruseni.
@@ -42,11 +42,11 @@ void Motor_driver::stop()
   this->set_goal_speed(0,0);
 }
 
-void Motor_driver::vel_callback(const geometry_msgs::Twist &msg)
+void Motor_driver::vel_callback(const trilobot::Vel &msg)
 { 
-  this->nh->loginfo("ddD");
-  float speed_l = msg.linear.x - (msg.angular.z*INTERWHEEL_DISTANCE)/2;
-  float speed_r = msg.linear.x + (msg.angular.z * INTERWHEEL_DISTANCE)/2;
+  //this->nh->loginfo("ddD");
+  float speed_l = msg.x - (msg.theta*INTERWHEEL_DISTANCE)/2;
+  float speed_r = msg.x + (msg.theta * INTERWHEEL_DISTANCE)/2;
   this->set_goal_speed(speed_l, speed_r);
 
   return;
