@@ -31,7 +31,8 @@ void Battery_driver::update()
     this->msg.cell2 = analogRead(A1) * 5.0/1023.0 * 200.0/100.0 - this->msg.cell1;
     this->msg.cell3 = analogRead(A2) * 5.0/1023.0 * 320.0/100.0 - this->msg.cell1 - this->msg.cell2;
     this->msg.cell4 = analogRead(A3) * 5.0/1023.0 * 400.0/100.0 - this->msg.cell1 - this->msg.cell2 - this->msg.cell3;
-
+    /*0 = not charging, 1 = charging (probably)*/
+    this->msg.charging = digitalRead(7);
     this->pub.publish(&this->msg);
   }
 }

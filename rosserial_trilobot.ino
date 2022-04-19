@@ -23,7 +23,7 @@
 /* Basic definitions used through the whole file */
 
 /* How long should one cycle take (at least) */
-#define CYCLE_DURATION 50  
+#define CYCLE_DURATION 20  
 /* Informational value to roughly time the cycle duration (details in loop()) */
 unsigned long cycle_start = 0;
 
