@@ -23,7 +23,9 @@
 /* Basic definitions used through the whole file */
 
 /* How long should one cycle take (at least) */
-#define CYCLE_DURATION 20  
+#define CYCLE_DURATION 20 
+#define CMD_VEL_PERIOD 100
+#define CMD_VEL_TIMEOUT 3*CMD_VEL_PERIOD /*NOTE: */
 /* Informational value to roughly time the cycle duration (details in loop()) */
 unsigned long cycle_start = 0;
 
@@ -42,7 +44,7 @@ void setup() {
 
   nh.initNode();
 
-  md = new Motor_driver(3*CYCLE_DURATION, &nh);
+  md = new Motor_driver(CMD_VEL_TIMEOUT, &nh);
   sd = new Sonar_driver(&nh);
   bd = new Battery_driver(&nh);
  
