@@ -17,7 +17,8 @@
 
 /**
  * Promenne nutne pro spravne fungovani preruseni.
- * NOTE: v celem kodu nejsou nulovany, protoze nez unsigned long pretece, Trilobot ujede cca 1400 km :) 
+ * NOTE: v celem kodu nejsou nulovany, protoze nez unsigned long pretece, Trilobot ujede cca 1400 km :)
+ * TODO: Nulovat pro zasilani do RPi 
  * */
 volatile unsigned long ticks_r = 0;
 volatile unsigned long ticks_l = 0; 

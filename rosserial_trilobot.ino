@@ -25,7 +25,7 @@
 /* How long should one cycle take (at least) */
 #define CYCLE_DURATION 20 
 #define CMD_VEL_PERIOD 100
-#define CMD_VEL_TIMEOUT 3*CMD_VEL_PERIOD /*NOTE: */
+#define CMD_VEL_TIMEOUT 3*CMD_VEL_PERIOD /*NOTE:nutne otestovat, momentalne 3.33 zpravy za sec, nez se zacne sekat */
 /* Informational value to roughly time the cycle duration (details in loop()) */
 unsigned long cycle_start = 0;
 
@@ -48,16 +48,8 @@ void setup() {
   sd = new Sonar_driver(&nh);
   bd = new Battery_driver(&nh);
  
-  /* A0-A3 are used to monitor voltage levels for each cell of the battery */
-  pinMode(A0, INPUT);
-  pinMode(A1, INPUT);
-  pinMode(A2, INPUT);
-  pinMode(A3, INPUT);
 
-  pinMode(7, INPUT);
 }
-
-
 
 
 void loop() 

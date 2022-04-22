@@ -11,12 +11,6 @@
 
 #include <Arduino.h>
 #include "battery.h"
-#include <std_msgs/Empty.h>
-
-void Battery_driver::callback(const std_msgs::Empty &msg)
-{
-  this->pub.publish(&this->msg);
-}
 
 void Battery_driver::update()
 {
@@ -27,12 +21,22 @@ void Battery_driver::update()
     /* Get battery voltages. 
       First fraction (5/1023) is conversion from range of ADC to 0-5 [V]
       Second one is a formula for voltage dividers (see documentation/diploma thesis) */
-    this->msg.cell1 = analogRead(A0)* 5.0/1023.0 * 147.0/100.0; 
-    this->msg.cell2 = analogRead(A1) * 5.0/1023.0 * 200.0/100.0 - this->msg.cell1;
-    this->msg.cell3 = analogRead(A2) * 5.0/1023.0 * 320.0/100.0 - this->msg.cell1 - this->msg.cell2;
-    this->msg.cell4 = analogRead(A3) * 5.0/1023.0 * 400.0/100.0 - this->msg.cell1 - this->msg.cell2 - this->msg.cell3;
+    this->msg.cell1 = analogRead(PIN_CELL0)* 5.0/1023.0 * 147.0/100.0; 
+    this->msg.cell2 = analogRead(PIN_CELL1) * 5.0/1023.0 * 200.0/100.0 - this->msg.cell1;
+    this->msg.cell3 = analogRead(PIN_CELL2) * 5.0/1023.0 * 320.0/100.0 - this->msg.cell1 - this->msg.cell2;
+    this->msg.cell4 = analogRead(PIN_CELL3) * 5.0/1023.0 * 400.0/100.0 - this->msg.cell1 - this->msg.cell2 - this->msg.cell3;
     /*0 = not charging, 1 = charging (probably)*/
-    this->msg.charging = digitalRead(7);
+    
     this->pub.publish(&this->msg);
   }
+
+  if((millis() - this->last_charge_update) >= CHARGE_UPDATE_INTERVAL)
+    {
+      this->last_charge_update = millis();
+
+      this->charge_msg = digitalRead(PIN_CHARGE_CHECK);
+
+      this->charge_pub.publish(&this->charge_msg);
+    }
+
 }
