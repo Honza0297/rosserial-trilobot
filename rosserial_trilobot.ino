@@ -28,9 +28,18 @@
 #define CMD_VEL_TIMEOUT 3*CMD_VEL_PERIOD /*NOTE:nutne otestovat, momentalne 3.33 zpravy za sec, nez se zacne sekat */
 /* Informational value to roughly time the cycle duration (details in loop()) */
 unsigned long cycle_start = 0;
+/* Master = RPi rosserial site */
+bool master_running = false;
 
 /* Node handle - "that thingy that creates roserial nodes" */
 ros::NodeHandle nh;
+
+ros::Subscriber<std_msgs::Empty> sub("trilobot/rosserial_start", &callback);
+
+void callback(std_msgs::Empty& msg)
+{
+  master_running = true;
+}
 
 /* HW handles */ 
 Motor_driver *md;
@@ -43,7 +52,8 @@ bool measuring = false;
 void setup() {
 
   nh.initNode();
-
+  nh.subscribe(sub);
+  
   md = new Motor_driver(CMD_VEL_TIMEOUT, &nh);
   sd = new Sonar_driver(&nh);
   bd = new Battery_driver(&nh);
@@ -54,6 +64,8 @@ void setup() {
 
 void loop() 
 {
+  while(!master_running){}
+  
   cycle_start = millis();
 
   /* Motor driver udpate */
