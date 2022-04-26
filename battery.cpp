@@ -34,7 +34,7 @@ void Battery_driver::update()
     {
       this->last_charge_update = millis();
 
-      this->charge_msg = digitalRead(PIN_CHARGE_CHECK);
+      this->charge_msg.data = digitalRead(PIN_CHARGE_CHECK);// == 0 ? false : true ;
 
       this->charge_pub.publish(&this->charge_msg);
     }
