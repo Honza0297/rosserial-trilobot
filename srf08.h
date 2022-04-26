@@ -56,7 +56,7 @@ const uint8_t srf08_addresses[6] = {
 
 
 #define SRF08_MEASURE_TIME 70
-
+#define SRF08_UPDATE_INTERVAL 200-SRF08_MEASURE_TIME //[ms], substracting measure time to achieve desired period/frequency
 
 typedef struct
 { 
@@ -96,9 +96,9 @@ class Sonar_driver
     ros::NodeHandle *nh;
     Sonar* sonar;
     unsigned long measure_start;
+    unsigned long last_updated;
     bool measuring;
     ros::Publisher pub;
-    ros::Subscriber<std_msgs::Empty, Sonar_driver> sub;
     trilobot::Sonar_data msg;
     void get_and_send_data();
     void callback(const std_msgs::Empty &msg);
@@ -106,14 +106,14 @@ class Sonar_driver
 
   public:
      Sonar_driver(ros::NodeHandle *nh)
-     : pub(topic_sonar_response, &msg), sub(topic_sonar_request, &Sonar_driver::callback, this)
+     : pub(topic_sonar_response, &msg)
      {
        this->nh = nh;
        this->sonar = new Sonar();
        this->measure_start = 0;
+       this->last_updated = 0;
        this->measuring = false;
 
-       this->nh->subscribe(this->sub);
        this->nh->advertise(this->pub);
      };
      void update();

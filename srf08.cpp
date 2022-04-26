@@ -19,12 +19,24 @@
 
 void Sonar_driver::update()
 {
-  if(measuring && millis() - this->measure_start >= SRF08_MEASURE_TIME)
+  switch this->measuring:
   {
-    this->measuring= false;
-    measure_start = 0;
-    this->get_and_send_data(); 
+    case true:
+      if(millis() - this->last_updated >= SRF08_MEASURE_TIME)
+      {
+        this->measuring= false;
+        this->get_and_send_data(); 
+      }
+      break;
+    case false:
+      if (millis()-this->last_updated) >= SRF08_UPDATE_INTERVAL)
+      {
+        this->last_updated = millis();
+        this->measuring = true;
+      } 
+      break;
   }
+  
 }
 
 void Sonar_driver::get_and_send_data()
@@ -41,13 +53,7 @@ void Sonar_driver::get_and_send_data()
   this->pub.publish(&this->msg);
 }
 
-void Sonar_driver::callback(const std_msgs::Empty &msg)
-{
-  this->sonar->set_measurement();
-  this->measuring = true;
-  this->measure_start = millis();
 
-}
 
 Sonar::Sonar()
 {
