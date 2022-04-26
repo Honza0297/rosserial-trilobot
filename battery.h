@@ -53,6 +53,7 @@ class Battery_driver
        this->msg.cell2 = 0;
        this->msg.cell3 = 0;
        this->msg.cell4 = 0;
+       this->msg.charging = false;
        last_update = 0;
        last_charge_update = 0;
 
