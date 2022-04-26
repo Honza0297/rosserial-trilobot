@@ -19,7 +19,7 @@
 
 void Sonar_driver::update()
 {
-  switch this->measuring:
+  switch (this->measuring)
   {
     case true:
       if(millis() - this->last_updated >= SRF08_MEASURE_TIME)
@@ -29,10 +29,11 @@ void Sonar_driver::update()
       }
       break;
     case false:
-      if (millis()-this->last_updated) >= SRF08_UPDATE_INTERVAL)
+      if (millis()-this->last_updated >= SRF08_UPDATE_INTERVAL)
       {
         this->last_updated = millis();
         this->measuring = true;
+        this->sonar->set_measurement();
       } 
       break;
   }

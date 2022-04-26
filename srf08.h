@@ -106,7 +106,7 @@ class Sonar_driver
 
   public:
      Sonar_driver(ros::NodeHandle *nh)
-     : pub(topic_sonar_response, &msg)
+     : pub(topic_sonar_data, &msg)
      {
        this->nh = nh;
        this->sonar = new Sonar();
