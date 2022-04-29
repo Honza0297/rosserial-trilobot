@@ -83,6 +83,35 @@ void Motor_driver::update()
   /* TODO if speed is zero for both motors, dont publish odometry because of bandwidth*/
   this->msg.r = ticks_r;
   this->msg.l = ticks_l;
+  if(this->power_r > POWER_STOP_R)
+  {
+    this->dir_msg.r = DIR_FORW;
+  }
+  else if(this->power_r < POWER_STOP_R)
+  {
+        this->dir_msg.r = DIR_BACK;
+  }
+  else
+  {
+    this->dir_msg.r = DIR_NONE;
+  }
+
+
+ if(this->power_l > POWER_STOP_L)
+  {
+    this->dir_msg.l = DIR_FORW;
+  }
+  else if(this->power_l < POWER_STOP_L)
+  {
+        this->dir_msg.l = DIR_BACK;
+  }
+  else
+  {
+    this->dir_msg.l = DIR_NONE;
+  }
+
+  
+  this->dir_pub.publish(&this->dir_msg);
   this->pub.publish(&this->msg);
   
   //if no update for too long, soft stop

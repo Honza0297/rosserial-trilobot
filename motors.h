@@ -15,8 +15,7 @@
 #include <trilobot/Vel.h>
 #include "topics.h"
 #include <trilobot/Encoders.h>
-
-
+#include <trilobot/Direction.h>
 /* Pocet kroku enkoderu pri vyuziti obou kanalu */
 #define STEPS_AB 3072.0
 /* Pocet kroku enkoderu pri pouziti jednoho kanalu */
@@ -51,6 +50,9 @@
 #define POWER_STOP_L 192
 #define POWER_STOP_R 64
 
+#define DIR_NONE 0
+#define DIR_FORW 1
+#define DIR_BACK 2
 
 
 enum State {move = 1, stop = 0}; 
@@ -100,7 +102,9 @@ class Motor_driver
         unsigned long last_ticks_r;
 
         trilobot::Encoders msg;
+        trilobot::Direction dir_msg;
         ros::Publisher pub;
+        ros::Publisher dir_pub;
         ros::Subscriber<trilobot::Vel, Motor_driver> vel_sub;
         Motors *motors;
         
@@ -111,7 +115,8 @@ class Motor_driver
 
     public:
         Motor_driver(int timeout,ros::NodeHandle *nh)
-        : pub(topic_trilobot_odometry, &msg), 
+        : pub(topic_trilobot_odometry, &msg),
+          dir_pub(topic_trilobot_direction, &dir_pub),
           vel_sub(topic_cmd_vel, &Motor_driver::vel_callback, this)
         {
           this->nh = nh;
