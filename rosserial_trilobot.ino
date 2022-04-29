@@ -30,16 +30,19 @@
 unsigned long cycle_start = 0;
 /* Master = RPi rosserial site */
 bool master_running = false;
-
+unsigned long last_master_ping = 0;
+#define MASTER_TIMEOUT 2000 //ms
 /* Node handle - "that thingy that creates roserial nodes" */
 ros::NodeHandle nh;
 
-ros::Subscriber<std_msgs::Empty> sub("trilobot/rosserial_start", &callback);
-
-void callback(std_msgs::Empty& msg)
+void callback(const std_msgs::Empty& msg)
 {
   master_running = true;
+  last_master_ping = millis();
 }
+ros::Subscriber<std_msgs::Empty> sub("trilobot/rosserial_start", &callback);
+
+
 
 /* HW handles */ 
 Motor_driver *md;
@@ -64,7 +67,17 @@ void setup() {
 
 void loop() 
 {
-  while(!master_running){}
+  while(!master_running)
+  {
+    nh.spinOnce();
+  }
+
+  /* if master did not send sync for more than MASTER_TIMEOUT ms, shut down updates (mostly sonars measurements) */
+  if(millis()-last_master_ping >= MASTER_TIMEOUT)
+  {
+    master_running = false;
+  }
+  
   
   cycle_start = millis();
 

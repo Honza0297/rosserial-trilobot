@@ -55,8 +55,8 @@ const uint8_t srf08_addresses[6] = {
 #define REG_LIGH 0x01
 
 
-#define SRF08_MEASURE_TIME 70
-#define SRF08_UPDATE_INTERVAL 200-SRF08_MEASURE_TIME //[ms], substracting measure time to achieve desired period/frequency
+#define SRF08_MEASURE_TIME 100
+#define SRF08_UPDATE_INTERVAL 1000 //[ms]
 
 typedef struct
 { 
@@ -98,6 +98,7 @@ class Sonar_driver
     unsigned long measure_start;
     unsigned long last_updated;
     bool measuring;
+    int cnt;
     ros::Publisher pub;
     trilobot::Sonar_data msg;
     void get_and_send_data();

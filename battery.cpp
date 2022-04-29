@@ -21,10 +21,10 @@ void Battery_driver::update()
     /* Get battery voltages. 
       First fraction (5/1023) is conversion from range of ADC to 0-5 [V]
       Second one is a formula for voltage dividers (see documentation/diploma thesis) */
-    this->msg.cell1 = 0.0;// analogRead(PIN_CELL0)* 5.0/1023.0 * 147.0/100.0; 
-    this->msg.cell2 = 1.0;//analogRead(PIN_CELL1) * 5.0/1023.0 * 200.0/100.0 - this->msg.cell1;
-    this->msg.cell3 = 2.0;//analogRead(PIN_CELL2) * 5.0/1023.0 * 320.0/100.0 - this->msg.cell1 - this->msg.cell2;
-    this->msg.cell4 = 3.0;//analogRead(PIN_CELL3) * 5.0/1023.0 * 400.0/100.0 - this->msg.cell1 - this->msg.cell2 - this->msg.cell3;
+    this->msg.cell1 = analogRead(PIN_CELL0)* 5.0/1023.0 * 147.0/100.0; 
+    this->msg.cell2 = analogRead(PIN_CELL1) * 5.0/1023.0 * 200.0/100.0 - this->msg.cell1;
+    this->msg.cell3 = analogRead(PIN_CELL2) * 5.0/1023.0 * 320.0/100.0 - this->msg.cell1 - this->msg.cell2;
+    this->msg.cell4 = analogRead(PIN_CELL3) * 5.0/1023.0 * 400.0/100.0 - this->msg.cell1 - this->msg.cell2 - this->msg.cell3;
     /* NOTE: rosserial on the RPi site somehow managed to "cache" the merged version of the message (voltages AND charge status).
        In other words, after splitting it to two messages, rosserial still insists that it needs charge status even here. 
        After DP submission, it would be good to fix that, however, it is not a painfull problem (sending just 1B/10s should not bother bandwith too much :) ) */

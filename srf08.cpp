@@ -19,26 +19,25 @@
 
 void Sonar_driver::update()
 {
-  switch (this->measuring)
-  {
-    case true:
-      if(millis() - this->last_updated >= SRF08_MEASURE_TIME)
-      {
-        this->measuring= false;
-        this->get_and_send_data(); 
-      }
-      break;
-    case false:
-      if (millis()-this->last_updated >= SRF08_UPDATE_INTERVAL)
+  if(this->measuring)
+    {
+       if( millis()-this->measure_start >= SRF08_MEASURE_TIME) // measure done
+       {
+         this->measuring = false;
+         this->get_and_send_data();
+       }
+    }
+  else // not measuring 
+    {  
+      if(millis()-this->last_updated >= SRF08_UPDATE_INTERVAL)
       {
         this->last_updated = millis();
         this->measuring = true;
+        this->measure_start = millis();
         this->sonar->set_measurement();
       } 
-      break;
-  }
-  
-}
+    } 
+ }
 
 void Sonar_driver::get_and_send_data()
 {
