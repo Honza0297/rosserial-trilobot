@@ -81,8 +81,8 @@ void Motor_driver::update()
 {
 
   /* TODO if speed is zero for both motors, dont publish odometry because of bandwidth*/
-  this->msg.right = ticks_r;
-  this->msg.left= ticks_l;
+  this->msg.r = ticks_r;
+  this->msg.l = ticks_l;
   this->pub.publish(&this->msg);
   
   //if no update for too long, soft stop

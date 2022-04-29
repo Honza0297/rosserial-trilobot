@@ -14,7 +14,7 @@
 #include <ros.h>
 #include <trilobot/Vel.h>
 #include "topics.h"
-#include <trilobot/Odometry.h>
+#include <trilobot/Encoders.h>
 
 
 /* Pocet kroku enkoderu pri vyuziti obou kanalu */
@@ -99,7 +99,7 @@ class Motor_driver
         unsigned long  timestamp_r;
         unsigned long last_ticks_r;
 
-        trilobot::Odometry msg;
+        trilobot::Encoders msg;
         ros::Publisher pub;
         ros::Subscriber<trilobot::Vel, Motor_driver> vel_sub;
         Motors *motors;
