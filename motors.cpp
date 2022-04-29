@@ -85,33 +85,33 @@ void Motor_driver::update()
   this->msg.l = ticks_l;
   if(this->motors->power_r > POWER_STOP_R)
   {
-    this->dir_msg.r = DIR_FORW;
+    this->msg.rdir = DIR_FORW;
   }
   else if(this->motors->power_r < POWER_STOP_R)
   {
-        this->dir_msg.r = DIR_BACK;
+    this->msg.rdir = DIR_BACK;
   }
   else
   {
-    this->dir_msg.r = DIR_NONE;
+    this->msg.r = DIR_NONE;
   }
 
 
  if(this->motors->power_l > POWER_STOP_L)
   {
-    this->dir_msg.l = DIR_FORW;
+    this->msg.ldir = DIR_FORW;
   }
   else if(this->motors->power_l < POWER_STOP_L)
   {
-        this->dir_msg.l = DIR_BACK;
+    this->msg.ldir = DIR_BACK;
   }
   else
   {
-    this->dir_msg.l = DIR_NONE;
+    this->msg.ldir = DIR_NONE;
   }
 
   
-  this->dir_pub.publish(&this->dir_msg);
+  //this->dir_pub.publish(&this->dir_msg);
   this->pub.publish(&this->msg);
   
   //if no update for too long, soft stop
