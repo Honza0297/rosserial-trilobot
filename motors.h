@@ -116,7 +116,7 @@ class Motor_driver
     public:
         Motor_driver(int timeout,ros::NodeHandle *nh)
         : pub(topic_trilobot_odometry, &msg),
-          dir_pub(topic_trilobot_direction, &dir_pub),
+          dir_pub(topic_trilobot_direction, &dir_msg),
           vel_sub(topic_cmd_vel, &Motor_driver::vel_callback, this)
         {
           this->nh = nh;
@@ -127,6 +127,7 @@ class Motor_driver
           this->timestamp_l = 0;
           this->nh->subscribe(this->vel_sub);
           this->nh->advertise(this->pub);
+          this->nh->advertise(this->dir_pub);
   
         };
         void update();
