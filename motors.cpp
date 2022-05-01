@@ -82,7 +82,10 @@ void Motor_driver::update()
 
   /* TODO if speed is zero for both motors, dont publish odometry because of bandwidth*/
   this->msg.r = ticks_r;
-  this->msg.l = ticks_l;
+
+  /*char bug[15];
+  sprintf(bug, "%lu\n", ticks_r);
+  this->nh->loginfo(bug);*/
   if(this->motors->power_r > POWER_STOP_R)
   {
     this->msg.rdir = DIR_FORW;
@@ -93,11 +96,11 @@ void Motor_driver::update()
   }
   else
   {
-    this->msg.r = DIR_NONE;
+    this->msg.rdir = DIR_NONE;
   }
 
-
- if(this->motors->power_l > POWER_STOP_L)
+  this->msg.l = ticks_l;
+  if(this->motors->power_l > POWER_STOP_L)
   {
     this->msg.ldir = DIR_FORW;
   }

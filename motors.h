@@ -43,7 +43,7 @@
 
 /* minimalni rychlost, m/s a minimalni vkon do motoru, aby se jeste tocil*/
 #define MIN_VELOCITY 0.02
-#define MIN_POWER 3
+#define MIN_POWER 4
 
 
 #define POWER_STOP_L 192
