@@ -57,18 +57,18 @@ void Motor_driver::set_goal_speed(float l, float r)
 {
   this->last_update = millis();
 
-   if(abs(l) < MIN_VELOCITY)
+  if(abs(l) < MIN_VELOCITY && l != 0)
   {
-    this->goal_speed_l = 0;
+    this->goal_speed_l = l < 0 ? -MIN_VELOCITY : MIN_VELOCITY;
   }
   else
   {
     this->goal_speed_l = l;
   }
 
-  if(abs(r) < MIN_VELOCITY)
+  if(abs(r) < MIN_VELOCITY && r != 0)
   {
-    this->goal_speed_r = 0;
+    this->goal_speed_r = r < 0 ? -MIN_VELOCITY : MIN_VELOCITY;
   }
   else
   {
@@ -80,7 +80,6 @@ void Motor_driver::set_goal_speed(float l, float r)
 void Motor_driver::update()
 {
 
-  /* TODO if speed is zero for both motors, dont publish odometry because of bandwidth*/
   this->msg.r = ticks_r;
 
   /*char bug[15];
