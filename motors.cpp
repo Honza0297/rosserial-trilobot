@@ -81,10 +81,6 @@ void Motor_driver::update()
 {
 
   this->msg.r = ticks_r;
-
-  /*char bug[15];
-  sprintf(bug, "%lu\n", ticks_r);
-  this->nh->loginfo(bug);*/
   if(this->motors->power_r > POWER_STOP_R)
   {
     this->msg.rdir = DIR_FORW;
@@ -121,12 +117,15 @@ void Motor_driver::update()
   {
     this->goal_speed_r = 0;
     this->goal_speed_l = 0;
+  }
+  else
+  {
+    byte power_r = this->compute_new_power('r');
+    byte power_l = this->compute_new_power('l');
+
+    this->motors->set_power(power_l, power_r);
   }    
 
-  byte power_r = this->compute_new_power('r');
-  byte power_l = this->compute_new_power('l');
-
-  this->motors->set_power(power_l, power_r);
 }       
 
 byte Motor_driver::compute_new_power(char motor)

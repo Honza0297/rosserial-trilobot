@@ -23,8 +23,8 @@
 /* Basic definitions used through the whole file */
 
 /* How long should one cycle take (at least) */
-#define CYCLE_DURATION 20 
-#define CMD_VEL_PERIOD 100
+#define CYCLE_DURATION 20 // [ms]
+#define CMD_VEL_PERIOD 100 //[ms]
 #define CMD_VEL_TIMEOUT 3*CMD_VEL_PERIOD /*NOTE:nutne otestovat, momentalne 3.33 zpravy za sec, nez se zacne sekat */
 /* Informational value to roughly time the cycle duration (details in loop()) */
 unsigned long cycle_start = 0;
@@ -67,6 +67,7 @@ void setup() {
 
 void loop() 
 {
+  /* Check whether Raspberry explicitly enables Arduino */
   while(!master_running)
   {
     nh.spinOnce();
