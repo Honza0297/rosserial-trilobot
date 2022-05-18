@@ -1,11 +1,13 @@
  /************************************************ */
  /*  Educational tutorial for Arduino in robotics  */
- /*  Vyukovy Tutorial pro pouziti Arduina v robotice*/
+ /*    AND
+ /*  Docking Station for Automatic Charging of Batteries of Robot
  /*  File: motors.cpp                              */
  /*  Author: Jan Beran                             */
- /*  Date: autumn 2019                             */
+ /*  Date: autumn 2019  and 2020-2022              */
  /*                                                */
- /* This file is a part of author´s bachelor thesis*/
+ /* This file is a part of author´s diploma thesis*/
+ /* This file used parts of code from author's bachelor thesis */  
  /*                                                */
  /**************************************************/
 

@@ -1,12 +1,18 @@
- /************************************************ */
- /*  Educational tutorial for Arduino in robotics  */
- /*  Vyukovy Tutorial pro pouziti Arduina v robotice*/
- /*  File: gyroscope.cpp                           */
- /*  Author: Jan Beran                             */
- /*  Date: March 2020                              */
- /*                                                */
- /* This file is a part of author´s bachelor thesis*/
- /*                                                */
+ /************************************************ 
+ /*  Educational tutorial for Arduino in robotics  
+ /*    AND
+ /*  Docking Station for Automatic Charging of Batteries of Robot
+ /*  File: gyroscope.cpp                           
+ /*  Author: Jan Beran                             
+ /*  Date: March 2020                              
+ /*                                                
+ /* This file is a part of author´s diploma thesis
+ /*                                                
+ /* Justification to include it in the diploma thesis: 
+ /* minIMUv3 is mounted on current Trilobots as well 
+ /* and once will be integrated. 
+ /* By now, this file WAS NOT CHANGED SINCE THE BACHELOR THESIS
+ /* (excluding this header)
  /**************************************************/
 
 #include <Wire.h>

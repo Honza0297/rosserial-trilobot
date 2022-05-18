@@ -1,13 +1,14 @@
- /************************************************ */
- /*  Educational tutorial for Arduino in robotics  */
- /*  Vyukovy Tutorial pro pouziti Arduina v robotice*/
- /*  File: srf08.cpp                               */
- /*  Author: Jan Beran                             */
- /*  Date: autumn 2019                             */
- /*                                                */
- /* This file is a part of author´s bachelor thesis*/
- /*                                                */
- /**************************************************/
+/************************************************ 
+/*  Docking Station for Automatic Charging of Batteries of Robot 
+/*  File: battery.cpp                               
+/*  Author: Jan Beran                             
+/*  Date: 2021-2022                           
+/*                                                
+/* This file is a part of author´s diploma thesis
+/*                                                
+/* Description: Gets current battery voltages and charging status
+/*              and send them via rosserial to the Raspberry Pi 
+/**************************************************/
 
 #include <Arduino.h>
 #include "battery.h"
@@ -20,7 +21,7 @@ void Battery_driver::update()
 
     /* Get battery voltages. 
       First fraction (5/1023) is conversion from range of ADC to 0-5 [V]
-      Second one is a formula for voltage dividers (see documentation/diploma thesis) */
+      Second one is a formula for voltage dividers*/
     this->msg.cell1 = analogRead(PIN_CELL0)* 5.0/1023.0 * 147.0/100.0; 
     this->msg.cell2 = analogRead(PIN_CELL1) * 5.0/1023.0 * 200.0/100.0 - this->msg.cell1;
     this->msg.cell3 = analogRead(PIN_CELL2) * 5.0/1023.0 * 320.0/100.0 - this->msg.cell1 - this->msg.cell2;

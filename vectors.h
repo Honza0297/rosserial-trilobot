@@ -1,12 +1,15 @@
  /************************************************      */
  /*  Educational tutorial for Arduino in robotics       */
- /*  Vyukovy Tutorial pro pouziti Arduina v robotice    */
+ /*    AND
+ /*  Docking Station for Automatic Charging of Batteries of Robot
  /*  File: vectors.h                                    */
  /*  Author: Pololu & Jan Beran                         */
  /*  Date: March 2020                                   */
  /*                                                     */
  /* This file is a part of author´s bachelor thesis     */
- /*                                                     */ 
+ /* Justification to include this file to to the authors's diploma thesis project:
+ /*    file is neccessary for minIMUv3 files.            */
+ /* File was NOT CHANGED since author's bachelor thesis */  
  /* Funkce jsou prevzaty nebo jsou inspirovany funkcemi z */
  /* https://github.com/pololu/minimu-9-ahrs-arduino     */
  /*******************************************************/

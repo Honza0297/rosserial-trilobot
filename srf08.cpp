@@ -1,6 +1,7 @@
  /************************************************ */
  /*  Educational tutorial for Arduino in robotics  */
- /*  Vyukovy Tutorial pro pouziti Arduina v robotice*/
+ /*    AND
+ /*  Docking Station for Automatic Charging of Batteries of Robot
  /*  File: srf08.cpp                               */
  /*  Author: Jan Beran                             */
  /*  Date: autumn 2019                             */

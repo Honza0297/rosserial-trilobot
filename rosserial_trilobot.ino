@@ -71,6 +71,7 @@ void loop()
   while(!master_running)
   {
     nh.spinOnce();
+    md->emergency_stop();
   }
 
   /* if master did not send sync for more than MASTER_TIMEOUT ms, shut down updates (mostly sonars measurements) */

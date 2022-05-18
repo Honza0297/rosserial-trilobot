@@ -1,3 +1,11 @@
+/****************
+Docking Station for Automatic Charging of Batteries of Robot
+
+Author: Jan Beran
+File: topics.h
+Date: 2021-2022
+Description: ROS topics for sending data from Arduino to Raspberry Pi via rosserial.
+****************************/
 #ifndef _TOPICS_H 
 #define _TOPICS_H 1
 
