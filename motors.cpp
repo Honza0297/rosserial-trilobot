@@ -116,18 +116,15 @@ void Motor_driver::update()
   this->pub.publish(&this->msg);
   
   /*if no update for too long, soft stop*/
-  if((millis() - this->last_update) >= this->timeout)
+  if((millis() - this->last_update) > this->timeout)
   {
-    this->goal_speed_r = 0;
-    this->goal_speed_l = 0;
+    this->stop();
   }
-  else /*recompute motor's desired power */
-  {
-    byte power_r = this->compute_new_power('r');
-    byte power_l = this->compute_new_power('l');
+  byte power_r = this->compute_new_power('r');
+  byte power_l = this->compute_new_power('l');
 
-    this->motors->set_power(power_l, power_r);
-  }    
+  this->motors->set_power(power_l, power_r);
+   
 
 }       
 

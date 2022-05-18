@@ -109,6 +109,9 @@ class Motor_driver
           this->timestamp_l = 0;
           this->nh->subscribe(this->vel_sub);
           this->nh->advertise(this->pub);  
+          this->last_update = millis();
+          this->goal_speed_l = 0;
+          this->goal_speed_r = 0;
         };
         void update();
         void stop();
