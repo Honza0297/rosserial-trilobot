@@ -1,16 +1,13 @@
  /************************************************ */
- /*  Educational tutorial for Arduino in robotics  */
+ /*  Educational tutorial for Arduino in robotics  
   /*    AND
  /*  Docking Station for Automatic Charging of Batteries of Robot
 
- /*  File: srf08.h                                 */
- /*  Author: Jan Beran                             */
- /*  Date: autumn 2019                             */
- /* This file is a part of authors bachelor thesis */
- /*                                                */
- /* This file contains macros and function         */
- /* prototypes for controlling srf-08 ligh         */
- /* and distance sensor.                           */
+ /*  File: srf08.h                                 
+ /*  Author: Jan Beran                             
+ /*  Date: autumn 2019 and 2020-2022              
+ /* This file is a part of authors diploma thesis 
+ /* This file used parts of code from author's bachelor thesis 
  /**************************************************/
  
  #ifndef _SRF08_H
@@ -105,7 +102,6 @@ class Sonar_driver
     ros::Publisher pub;
     trilobot::Sonar_data msg;
     void get_and_send_data();
-    void callback(const std_msgs::Empty &msg);
 
 
   public:

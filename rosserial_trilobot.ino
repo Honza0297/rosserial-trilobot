@@ -1,8 +1,13 @@
-/*************************************************/
-/** Testovaci kod pro ovladani Trilobota 2.0    **/
-/*************************************************/
+/*************************************************
+Docking Station for Automatic Charging of Batteries of Robot
 
-#define DEBUG_ENABLED 1
+Author: Jan Beran
+Date: 2021-2022
+File: trilobot.ino
+Description: Main file of the Arduino part of diploma thesis
+             Details directly in code
+
+*************************************************/
 
 /* Generic includes */
 /* --empty-- */
@@ -20,61 +25,63 @@
 #include "topics.h"
 #include "battery.h"
 
+/*************************************************/
 /* Basic definitions used through the whole file */
+/*************************************************/
 
 /* How long should one cycle take (at least) */
-#define CYCLE_DURATION 20 // [ms]
+#define CYCLE_DURATION 20 //[ms]
 #define CMD_VEL_PERIOD 100 //[ms]
-#define CMD_VEL_TIMEOUT 3*CMD_VEL_PERIOD /*NOTE:nutne otestovat, momentalne 3.33 zpravy za sec, nez se zacne sekat */
+#define CMD_VEL_TIMEOUT 3*CMD_VEL_PERIOD //[ms]
 /* Informational value to roughly time the cycle duration (details in loop()) */
-unsigned long cycle_start = 0;
+unsigned long cycle_start = 0; //[ms]
+
 /* Master = RPi rosserial site */
 bool master_running = false;
 unsigned long last_master_ping = 0;
 #define MASTER_TIMEOUT 2000 //ms
-/* Node handle - "that thingy that creates roserial nodes" */
+
+/* Node handle - "that thingy that creates roserial nodes" :)*/
+/* More seriously: Arduino equivalent of ROS master */
 ros::NodeHandle nh;
 
-void callback(const std_msgs::Empty& msg)
+
+/* Keepalive - if RPi stops sending keepalive messages, Arduino freezes until new ping received
+/* Reason: prevention of fatal error in RPi, but still maintaining rossserial connection */
+void keepalive_callback(const std_msgs::Empty& msg)
 {
   master_running = true;
   last_master_ping = millis();
 }
-ros::Subscriber<std_msgs::Empty> sub("trilobot/rosserial_start", &callback);
+ros::Subscriber<std_msgs::Empty> sub("trilobot/rosserial_start", &keepalive_callback);
 
 
 
-/* HW handles */ 
+/* HW handles ~ drivers */ 
 Motor_driver *md;
 Sonar_driver *sd;
 Battery_driver *bd;
 
-/* Control flags */
-bool measuring = false;
-
 void setup() {
-
   nh.initNode();
   nh.subscribe(sub);
   
   md = new Motor_driver(CMD_VEL_TIMEOUT, &nh);
   sd = new Sonar_driver(&nh);
   bd = new Battery_driver(&nh);
- 
-
 }
 
 
 void loop() 
 {
-  /* Check whether Raspberry explicitly enables Arduino */
+  /* Check whether Raspberry explicitly enables Arduino loop */
   while(!master_running)
   {
     nh.spinOnce();
     md->emergency_stop();
   }
 
-  /* if master did not send sync for more than MASTER_TIMEOUT ms, shut down updates (mostly sonars measurements) */
+  /* If master did not send sync for more than MASTER_TIMEOUT ms, unset flag */
   if(millis()-last_master_ping >= MASTER_TIMEOUT)
   {
     master_running = false;

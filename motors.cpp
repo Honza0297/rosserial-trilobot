@@ -1,14 +1,17 @@
- /************************************************ */
- /*  Educational tutorial for Arduino in robotics  */
+ /************************************************ 
+ /*  Educational tutorial for Arduino in robotics  
  /*    AND
  /*  Docking Station for Automatic Charging of Batteries of Robot
- /*  File: motors.cpp                              */
- /*  Author: Jan Beran                             */
- /*  Date: autumn 2019  and 2020-2022              */
- /*                                                */
- /* This file is a part of author´s diploma thesis*/
- /* This file used parts of code from author's bachelor thesis */  
- /*                                                */
+ /*  File: motors.cpp                              
+ /*  Author: Jan Beran                             
+ /*  Date: autumn 2019  and 2020-2022              
+ /*  Description: code is used to control Trilobot's motors with Sabertooth 2x5
+                  It gets periodical updates of desired speed from Raspberry Pi
+                  and tries to update power of the motors to meet this speed.                  
+/*                                                
+ /* This file is a part of author´s diploma thesis
+ /* This file used parts of code from author's bachelor thesis 
+ /*                                                
  /**************************************************/
 
 
@@ -19,14 +22,14 @@
 
 /**
  * Promenne nutne pro spravne fungovani preruseni.
- * NOTE: v celem kodu nejsou nulovany, protoze nez unsigned long pretece, Trilobot ujede cca 1400 km :)
- * TODO: Nulovat pro zasilani do RPi 
+ * Variables needed for interrupts to work properly. Sotres number if ticks from encoders.
+ * NOTE: Variables are not zeroed in the code, because Trilobot would need to travel more than 1400 km in one run to cause overflow :) 
  * */
 volatile unsigned long ticks_r = 0;
 volatile unsigned long ticks_l = 0; 
 
 /**
- * Prototypy funkci pro ovladani preruseni
+ * Function prototypes to control interrupts
  * */
 void motor_right_interrupt_handler();
 void motor_left_interrupt_handler();
@@ -47,7 +50,6 @@ void Motor_driver::stop()
 
 void Motor_driver::vel_callback(const trilobot::Vel &msg)
 { 
-  //this->nh->loginfo("ddD");
   float speed_l = msg.x - (msg.theta*INTERWHEEL_DISTANCE)/2;
   float speed_r = msg.x + (msg.theta * INTERWHEEL_DISTANCE)/2;
   this->set_goal_speed(speed_l, speed_r);
@@ -55,9 +57,10 @@ void Motor_driver::vel_callback(const trilobot::Vel &msg)
   return;
 }
 
+/* Checks min limits of the robot and sets speeds from previous functions. */
 void Motor_driver::set_goal_speed(float l, float r)
 {
-  this->last_update = millis();
+  this->last_update = millis(); // Could be in vel_callback as well instead of here
 
   if(abs(l) < MIN_VELOCITY && l != 0)
   {
@@ -81,7 +84,7 @@ void Motor_driver::set_goal_speed(float l, float r)
 
 void Motor_driver::update()
 {
-
+  /* Prepare raw odometry data - encoder ticks and motor direction*/
   this->msg.r = ticks_r;
   if(this->motors->power_r > POWER_STOP_R)
   {
@@ -109,18 +112,16 @@ void Motor_driver::update()
   {
     this->msg.ldir = DIR_NONE;
   }
-
-  
-  //this->dir_pub.publish(&this->dir_msg);
+  /* Publish raw odometry data*/
   this->pub.publish(&this->msg);
   
-  //if no update for too long, soft stop
+  /*if no update for too long, soft stop*/
   if((millis() - this->last_update) >= this->timeout)
   {
     this->goal_speed_r = 0;
     this->goal_speed_l = 0;
   }
-  else
+  else /*recompute motor's desired power */
   {
     byte power_r = this->compute_new_power('r');
     byte power_l = this->compute_new_power('l');
@@ -132,12 +133,8 @@ void Motor_driver::update()
 
 byte Motor_driver::compute_new_power(char motor)
 {
-  /*
-    TODO:
-    - make function for computing current speed
-    - make magic values constants
-    **/
   byte power;
+
   if(motor == 'r')
   {
     float current_speed_r = this->motors->get_dir_coef(this->motors->power_r) * ((double)(((ticks_r - this->last_ticks_r) * 0.279)/768.0) / ((double)(millis()-this->timestamp_r) / 1000.0));
@@ -157,12 +154,10 @@ byte Motor_driver::compute_new_power(char motor)
       if(this->goal_speed_r > current_speed_r)
       {
         power_r = power_r < 127 ? power_r+1 : power_r;
-        //TODO loguj pokud jedes na max, ale stejne je to malo (druhy case)
       }
       if(this->goal_speed_r < current_speed_r)
       {
         power_r = power_r > 1 ? power_r-1 : power_r;
-        //todo log, ze pomaleji to uz nepujde v pripade druheho pripadu
       }
     }
     power = power_r;
@@ -188,12 +183,10 @@ byte Motor_driver::compute_new_power(char motor)
       if(this->goal_speed_l > current_speed_l)
       {
         power_l = power_l < 255 ? power_l+1 : power_l;
-        //TODO loguj pokud jedes na max, ale stejne je to malo (druhy case)
       }
       if(this->goal_speed_l < current_speed_l)
       {
         power_l = power_l > 128 ? power_l-1 : power_l;
-        //todo log, ze pomaleji to uz nepujde v pripade druheho pripadu
       }
     }
     power = power_l;
@@ -237,23 +230,6 @@ Motors::Motors()
   attach_interrupts();  
 }
 
-bool Motors::moving()
-{
-  bool ret;
-
-  if (power_l == POWER_STOP_L || this->power_r == POWER_STOP_R)
-  {
-    ret = false;
-  }
-  else
-  {
-    ret = true;
-  }
-
-  return ret;
-
-}
-
 void Motors::set_power(byte l, byte r)
 {
   this->power_l = l;
@@ -288,8 +264,6 @@ int Motors::get_dir_coef(byte power)
   return retval;
 }
 
-
-
 void Motors::stop()
 {
   Serial1.write(STOP_BYTE);
@@ -298,29 +272,25 @@ void Motors::stop()
 
 
 /************************************/
-/* Funkce pro ovladni preruseni     */
+/* Interrupt control              */
 /************************************/
 
-/** @brief Funkce pro obsluhu preruseni z praveho motoru */
 void motor_right_interrupt_handler()
 {
   ticks_r++;
 }
 
-/** @brief Funkce pro obsluhu preruseni z leveho motoru */
 void motor_left_interrupt_handler()
 {
   ticks_l++;
 }
 
-/** @brief Funkce zapne preruseni na pinech enkoderu */
 void attach_interrupts()
 {
  attachInterrupt(digitalPinToInterrupt(RIGHT_A), motor_right_interrupt_handler, RISING);
  attachInterrupt(digitalPinToInterrupt(LEFT_A), motor_left_interrupt_handler, RISING);
 }
 
-/** @brief Funkce vypne preruseni na pinech enkoderu a vynuluje citaci poctu kroku. */
 void detach_interrupts()
 {
  detachInterrupt(digitalPinToInterrupt(LEFT_A));

@@ -1,13 +1,15 @@
- /************************************************ */
- /*  Educational tutorial for Arduino in robotics  */
+ /************************************************ 
+ /*  Educational tutorial for Arduino in robotics  
  /*    AND
  /*  Docking Station for Automatic Charging of Batteries of Robot
- /*  File: srf08.cpp                               */
- /*  Author: Jan Beran                             */
- /*  Date: autumn 2019                             */
- /*                                                */
- /* This file is a part of author´s bachelor thesis*/
- /*                                                */
+ /*  File: srf08.cpp                               
+ /*  Author: Jan Beran                             
+ /*  Date: autumn 2019 and 2020-2022                            
+ /*  Description: Gets sonar readings from all six sonars and sends the data to Raspberry Pi
+ /*                                              
+ /* This file is a part of author´s diploma thesis.
+/* This file used parts of code from author's bachelor thesis 
+ /*                                                
  /**************************************************/
 
 #include <Arduino.h>
@@ -68,16 +70,12 @@ void Sonar::set_measurement(byte unit, uint8_t address)
   Wire.write(REG_CMD);
   Wire.write(unit);
   Wire.endTransmission();
-  /*V dokumentaci se pise 60 ms, ale to nemusi stacit*/
-  //delay(100);
 }
 
 sonar_data Sonar::get_distances(byte unit)
 {
-  uint16_t data[6];
-  //this->set_measurement(unit, SRF08_ADDRESS_BROADCAST);
-  
-  /* Ignorovani prvnich dvou registru*/
+  uint16_t data[6];  
+  /* Ignoring first two registers*/
   for(int i = 0; i < NUM_OF_SONARS; i++)
   {
     Wire.beginTransmission(srf08_addresses[i]);
