@@ -71,6 +71,7 @@ void setup() {
   bd = new Battery_driver(&nh);
 }
 
+char buff[24];
 
 void loop() 
 {
@@ -92,7 +93,8 @@ void loop()
 
   /* Motor driver udpate */
   md->update();
-
+  sprintf(buff, "r: %d, l: %d\n", md->motors->get_current_power("r"), md->motors->get_current_power("l"));
+  nh.loginfo(buff);
   /* Sonar driver udpate */
   sd->update();
 
