@@ -40,8 +40,8 @@
 #define RIGHT_B 52
 
 /* Minimal robot speed and minimal power to send in Sabertooth to ensure motor will spin */
-#define MIN_VELOCITY 0.03
-#define MIN_POWER 4
+#define MIN_VELOCITY 0.02
+#define MIN_POWER 3
 
 
 #define POWER_STOP_L 192
