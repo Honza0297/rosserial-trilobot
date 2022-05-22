@@ -53,14 +53,13 @@ void Motor_driver::vel_callback(const trilobot::Vel &msg)
   float speed_l = msg.x - (msg.theta*INTERWHEEL_DISTANCE)/2;
   float speed_r = msg.x + (msg.theta * INTERWHEEL_DISTANCE)/2;
   this->set_goal_speed(speed_l, speed_r);
-
+  this->last_update = millis(); // Could be in vel_callback as well instead of here
   return;
 }
 
 /* Checks min limits of the robot and sets speeds from previous functions. */
 void Motor_driver::set_goal_speed(float l, float r)
 {
-  this->last_update = millis(); // Could be in vel_callback as well instead of here
 
   if(abs(l) < MIN_VELOCITY && l != 0)
   {
