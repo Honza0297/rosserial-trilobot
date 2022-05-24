@@ -71,8 +71,6 @@ void setup() {
   bd = new Battery_driver(&nh);
 }
 
-char buff[24];
-
 void loop() 
 {
   /* Check whether Raspberry explicitly enables Arduino loop */
@@ -80,6 +78,7 @@ void loop()
   {
     nh.spinOnce();
     md->emergency_stop();
+    delay(5);
   }
 
   /* If master did not send sync for more than MASTER_TIMEOUT ms, unset flag */
@@ -93,8 +92,7 @@ void loop()
 
   /* Motor driver udpate */
   md->update();
-  sprintf(buff, "r: %d, l: %d\n", md->motors->get_current_power("r"), md->motors->get_current_power("l"));
-  nh.loginfo(buff);
+
   /* Sonar driver udpate */
   sd->update();
 
@@ -102,7 +100,7 @@ void loop()
   bd->update();
 
   nh.spinOnce();
-
+ 
  /* Rough timing of one cycle.
     It guarantees minimal cycle duration (set by CYCLE_DURATION), but not the maximal duration! */
  delay((millis()-cycle_start) < CYCLE_DURATION ? (CYCLE_DURATION - (millis()-cycle_start)) : 1);

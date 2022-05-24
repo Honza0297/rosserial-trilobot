@@ -89,7 +89,6 @@ class Motor_driver
         trilobot::Odom msg;
         ros::Publisher pub;
         ros::Subscriber<trilobot::Vel, Motor_driver> vel_sub;
-        Motors *motors;
         
         long last_update;
         int timeout;
@@ -97,6 +96,7 @@ class Motor_driver
 
 
     public:
+        Motors *motors;
         Motor_driver(int timeout,ros::NodeHandle *nh)
         : pub(topic_trilobot_odometry, &msg),
           vel_sub(topic_cmd_vel, &Motor_driver::vel_callback, this)
